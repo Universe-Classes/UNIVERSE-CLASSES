@@ -1,0 +1,27 @@
+{
+  "name": "Universe Classes",
+  "short_name": "Universe Classes",
+  "description": "Bihar Board Class 9th aur 10th ke liye best online coaching in Araria, Bihar.",
+  "start_url": "/UNIVERSE-CLASSES/",
+  "scope": "/UNIVERSE-CLASSES/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1a237e",
+  "theme_color": "#1a237e",
+  "lang": "hi",
+  "icons": [
+    {
+      "src": "logo.jpeg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo.jpeg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education"]
+}
