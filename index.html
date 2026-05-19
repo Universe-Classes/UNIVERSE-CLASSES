@@ -2653,25 +2653,24 @@ const FCM_VAPID_KEY = 'BLgml-8tHKSOtDniHwqxJ278bgDYdVea2HXqm_2ISUMnSW_UyQetGZdEM
 async function initFCM(){
   try{
     if(!('serviceWorker' in navigator)||!('PushManager' in window))return;
-    // Register service worker
     const reg = await navigator.serviceWorker.register('/UNIVERSE-CLASSES/firebase-messaging-sw.js');
-    // Request permission
+    await navigator.serviceWorker.ready;
     const permission = await Notification.requestPermission();
     if(permission !== 'granted')return;
-    // Get FCM token via Firebase Messaging
     if(typeof firebase !== 'undefined' && firebase.messaging){
       const messaging = firebase.messaging();
-      const token = await messaging.getToken({vapidKey: FCM_VAPID_KEY, serviceWorkerRegistration: reg});
+      const token = await messaging.getToken({
+        vapidKey: FCM_VAPID_KEY,
+        serviceWorkerRegistration: reg
+      });
       if(token && CU){
-        // Save token to user's Firebase record
         const uid = CU.uid || CU.id;
         if(uid && rtdb){
           await rtdb.ref('fcmTokens/'+uid).set({token, updatedAt: Date.now()});
         }
       }
-      // Handle foreground notifications
       messaging.onMessage((payload)=>{
-        const {title, body, icon} = payload.notification || {};
+        const {title, body} = payload.notification || {};
         showToast('🔔 '+(title||'Notification')+': '+(body||''));
       });
     }
