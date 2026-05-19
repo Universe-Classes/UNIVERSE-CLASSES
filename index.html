@@ -2661,8 +2661,7 @@ async function initFCM(){
     // Get FCM token via Firebase Messaging
     if(typeof firebase !== 'undefined' && firebase.messaging){
       const messaging = firebase.messaging();
-      messaging.useServiceWorker(reg);
-      const token = await messaging.getToken({vapidKey: FCM_VAPID_KEY});
+      const token = await messaging.getToken({vapidKey: FCM_VAPID_KEY, serviceWorkerRegistration: reg});
       if(token && CU){
         // Save token to user's Firebase record
         const uid = CU.uid || CU.id;
