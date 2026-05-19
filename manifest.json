@@ -1,27 +1,63 @@
 {
+  "id": "https://universe-classes.github.io/UNIVERSE-CLASSES/",
   "name": "Universe Classes",
   "short_name": "Universe Classes",
   "description": "Bihar Board Class 9th aur 10th ke liye best online coaching in Araria, Bihar.",
-  "start_url": "/UNIVERSE-CLASSES/",
-  "scope": "/UNIVERSE-CLASSES/",
+  "start_url": "https://universe-classes.github.io/UNIVERSE-CLASSES/",
+  "scope": "https://universe-classes.github.io/UNIVERSE-CLASSES/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "browser"],
   "orientation": "portrait",
   "background_color": "#1a237e",
   "theme_color": "#1a237e",
   "lang": "hi",
+  "dir": "ltr",
+  "prefer_related_applications": false,
   "icons": [
     {
-      "src": "logo.jpeg",
+      "src": "https://universe-classes.github.io/UNIVERSE-CLASSES/logo.png",
       "sizes": "192x192",
-      "type": "image/jpeg",
-      "purpose": "any maskable"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "logo.jpeg",
+      "src": "https://universe-classes.github.io/UNIVERSE-CLASSES/logo.png",
       "sizes": "512x512",
-      "type": "image/jpeg",
-      "purpose": "any maskable"
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
-  "categories": ["education"]
+  "screenshots": [
+    {
+      "src": "https://universe-classes.github.io/UNIVERSE-CLASSES/screenshot1.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Universe Classes - Home Page"
+    },
+    {
+      "src": "https://universe-classes.github.io/UNIVERSE-CLASSES/screenshot2.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Universe Classes - Mobile View"
+    }
+  ],
+  "categories": ["education"],
+  "shortcuts": [
+    {
+      "name": "Classes",
+      "short_name": "Classes",
+      "description": "View all classes",
+      "url": "https://universe-classes.github.io/UNIVERSE-CLASSES/#classes",
+      "icons": [{ "src": "https://universe-classes.github.io/UNIVERSE-CLASSES/logo.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Contact Us",
+      "short_name": "Contact",
+      "description": "Contact Universe Classes",
+      "url": "https://universe-classes.github.io/UNIVERSE-CLASSES/#contact",
+      "icons": [{ "src": "https://universe-classes.github.io/UNIVERSE-CLASSES/logo.png", "sizes": "96x96" }]
+    }
+  ]
 }
