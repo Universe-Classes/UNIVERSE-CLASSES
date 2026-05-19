@@ -2316,13 +2316,12 @@ async function openStudentAccess(studentId, studentName, enrolled){
     }).join('');
   }
   
-  // Populate course dropdown (courses not already enrolled)
+  // Populate course dropdown (ALL courses - enrolled ones marked)
   const sel = document.getElementById('sacCourseSelect');
   sel.innerHTML = '<option value="">— Course Select करें —</option>';
   AC.forEach(c=>{
-    if(!sacStudentEnrolled.includes(c.id)){
-      sel.innerHTML += `<option value="${c.id}">${c.name}</option>`;
-    }
+    const isEnrolled = sacStudentEnrolled.includes(c.id);
+    sel.innerHTML += `<option value="${c.id}" ${isEnrolled?'disabled style="color:gray"':''}>${c.name}${isEnrolled?' (Already Enrolled)':''}</option>`;
   });
   
   openModal('studentAccessMod');
