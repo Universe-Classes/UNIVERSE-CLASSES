@@ -867,8 +867,15 @@ button,input,select,textarea{font-family:'Poppins',sans-serif;outline:none}
     <div class="mh" style="background:linear-gradient(135deg,#ff6f00,#f57c00)"><h3>📚 Course Enroll</h3></div>
     <div class="mb">
       <p id="enrollTxt">Join karna chahte hain?</p>
-      <div style="background:var(--bg);border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px;color:var(--txl)">💡 Enroll ke baad WhatsApp: <strong style="color:var(--tx)" id="enrollWA">+91 8825270186</strong></div>
-      <div class="macts"><button class="btn-cc" onclick="closeModal('enrollMod')">Cancel</button><button class="btn-cf" style="background:var(--s)" onclick="doEnroll()">✅ Enroll</button></div>
+      <div style="background:#e8f5e9;border-radius:8px;padding:12px;margin-bottom:12px;font-size:13px;color:#2e7d32;text-align:center;font-weight:600">
+        📲 Enroll karne ke liye WhatsApp par message karein!
+      </div>
+      <div class="macts">
+        <button class="btn-cc" onclick="closeModal('enrollMod')">Cancel</button>
+        <button class="btn-cf" style="background:#25D366;display:flex;align-items:center;gap:6px;justify-content:center" onclick="doEnroll()">
+          <i class="fab fa-whatsapp" style="font-size:18px"></i> WhatsApp par Enroll करें
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -1425,9 +1432,17 @@ function applySettings(){
 // ENROLL
 function openEnroll(id,name){selCourse=id;document.getElementById('enrollTxt').textContent='"'+name+'" mein enroll karna chahte hain?';openModal('enrollMod');}
 async function doEnroll(){
-  if(!selCourse||!CU)return;const uid=CU.uid||CU.id||CU.email;
-  await enroll(uid,selCourse);CUD=await getUser(uid)||CUD;closeModal('enrollMod');
-  showToast('✅ Enrolled! WhatsApp: '+(AS.wa||'+91 8825270186'));renderProfile();
+  if(!selCourse||!CU)return;
+  const uid=CU.uid||CU.id||CU.email;
+  const courseName=AC.find(c=>c.id===selCourse)?.name||'Course';
+  await enroll(uid,selCourse);
+  CUD=await getUser(uid)||CUD;
+  closeModal('enrollMod');
+  renderProfile();
+  // WhatsApp par redirect
+  const waNo=(AS.wa||'+91 8825270186').replace(/[^0-9]/g,'');
+  const msg=encodeURIComponent('Hello! I want to enroll in Universe Classes\nCourse: '+courseName+'\nName: '+(CUD.name||CU.displayName||'')+'\nClass: '+(CUD.cls||''));
+  window.open('https://wa.me/'+waNo+'?text='+msg,'_blank');
 }
 
 // ================================================================
