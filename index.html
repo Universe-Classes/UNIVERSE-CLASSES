@@ -1141,6 +1141,9 @@ async function saveUser(uid,data){
   if(FBOn&&db){try{await db.collection('users').doc(uid).set(data,{merge:true});}catch(e){}}
 }
 async function enroll(uid,cid){
+  // Sirf admin is function ko call kar sakta hai
+  // Student khud enroll nahi kar sakta — admin panel se hi access milta hai
+  if(!isAdmin)return;
   if(!CUD.enrolled)CUD.enrolled=[];
   if(!CUD.enrolled.includes(cid)){CUD.enrolled.push(cid);await saveUser(uid,CUD);}
 }
@@ -1433,16 +1436,24 @@ function applySettings(){
 function openEnroll(id,name){selCourse=id;document.getElementById('enrollTxt').textContent='"'+name+'" mein enroll karna chahte hain?';openModal('enrollMod');}
 async function doEnroll(){
   if(!selCourse||!CU)return;
-  const uid=CU.uid||CU.id||CU.email;
   const courseName=AC.find(c=>c.id===selCourse)?.name||'Course';
-  await enroll(uid,selCourse);
-  CUD=await getUser(uid)||CUD;
   closeModal('enrollMod');
-  renderProfile();
-  // WhatsApp par redirect
+  // Sirf WhatsApp par redirect — koi auto enroll nahi
   const waNo=(AS.wa||'+91 8825270186').replace(/[^0-9]/g,'');
   const msg=encodeURIComponent('Hello! I want to enroll in Universe Classes\nCourse: '+courseName+'\nName: '+(CUD.name||CU.displayName||'')+'\nClass: '+(CUD.cls||''));
-  window.open('https://wa.me/'+waNo+'?text='+msg,'_blank');
+  const waUrl='whatsapp://send?phone='+waNo+'&text='+msg;
+  const waWebUrl='https://wa.me/'+waNo+'?text='+msg;
+  const a=document.createElement('a');
+  a.href=waUrl;
+  a.style.display='none';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>{
+    if(document.visibilityState!=='hidden'){
+      window.open(waWebUrl,'_blank');
+    }
+  },1000);
 }
 
 // ================================================================
