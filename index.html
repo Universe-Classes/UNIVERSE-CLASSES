@@ -1000,11 +1000,14 @@ function initFB(){
 // ================================================================
 // STARTUP
 // ================================================================
+let bootCalled=false;
 window.addEventListener('DOMContentLoaded',()=>{
   initFB();
   setTimeout(()=>{
     if(FBOn){
-      auth.onAuthStateChanged(u=>{if(u){CU=u;bootApp();}else showPg('pgAuth');});
+      auth.onAuthStateChanged(u=>{
+        if(u){if(bootCalled)return;bootCalled=true;CU=u;bootApp();}else{bootCalled=false;showPg('pgAuth');}
+      });
     } else {
       const mu=L.g('mockUser');
       if(mu){CU=mu;bootApp();}else showPg('pgAuth');
@@ -1462,14 +1465,15 @@ function renderProfile(){
   mc.innerHTML=my.length?my.map((c,i)=>ccHTML(c,i)).join(''):'<div style="padding:0 14px;width:100%"><div class="empty"><i class="fas fa-book"></i><p>Koi course enrolled nahi. Courses se join karein!</p></div></div>';
 }
 function applySettings(){
-  if(AS.students)document.getElementById('hSt1').textContent=AS.students;
-  if(AS.ticker){document.getElementById('tick1').textContent=AS.ticker;document.getElementById('tick2').textContent=AS.ticker;}
-  if(AS.wa)document.getElementById('enrollWA').textContent=AS.wa;
-  if(AS.students)document.getElementById('as_st').value=AS.students;
-  if(AS.phone)document.getElementById('as_ph').value=AS.phone;
-  if(AS.wa)document.getElementById('as_wa').value=AS.wa;
-  if(AS.ticker)document.getElementById('as_tk').value=AS.ticker;
-  if(AS.yt)document.getElementById('as_yt').value=AS.yt;
+  const g=id=>document.getElementById(id);
+  if(AS.students&&g('hSt1'))g('hSt1').textContent=AS.students;
+  if(AS.ticker){if(g('tick1'))g('tick1').textContent=AS.ticker;if(g('tick2'))g('tick2').textContent=AS.ticker;}
+  if(AS.wa&&g('enrollWA'))g('enrollWA').textContent=AS.wa;
+  if(AS.students&&g('as_st'))g('as_st').value=AS.students;
+  if(AS.phone&&g('as_ph'))g('as_ph').value=AS.phone;
+  if(AS.wa&&g('as_wa'))g('as_wa').value=AS.wa;
+  if(AS.ticker&&g('as_tk'))g('as_tk').value=AS.ticker;
+  if(AS.yt&&g('as_yt'))g('as_yt').value=AS.yt;
 }
 
 // ENROLL
