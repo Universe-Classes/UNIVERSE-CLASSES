@@ -1172,19 +1172,40 @@ async function doLogin(){
   const pw=document.getElementById('lPass').value;
   const btn=document.getElementById('btnLogin');
   setMsg('loginMsg','','');
-  if(!em||!pw){setMsg('loginMsg','⚠️ Email aur password enter karein','err');return}
+  if(!em&&!pw){setMsg('loginMsg','⚠️ Email aur Password dono enter karein!','err');return}
+  if(!em){setMsg('loginMsg','⚠️ Email enter karein!','err');return}
+  if(!pw){setMsg('loginMsg','⚠️ Password enter karein!','err');return}
+  // Basic email format check
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)){setMsg('loginMsg','⚠️ Sahi email format daalo! (jaise: abc@gmail.com)','err');return}
   btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Login...';
   try{
     if(FBOn){
+      // Pehle check karo ki email registered hai ya nahi
+      const methods=await auth.fetchSignInMethodsForEmail(em);
+      if(!methods||methods.length===0){
+        setMsg('loginMsg','❌ Yeh Email registered nahi hai! Pehle Register karein.','err');
+        btn.disabled=false;btn.innerHTML='Login करें';return;
+      }
       const c=await auth.signInWithEmailAndPassword(em,pw);CU=c.user;await bootApp();
     } else {
-      const us=L.g('registeredUsers')||[];const u=us.find(x=>x.email===em&&x.password===pw);
+      const us=L.g('registeredUsers')||[];
+      const uByEmail=us.find(x=>x.email===em);
+      if(!uByEmail){setMsg('loginMsg','❌ Yeh Email registered nahi hai! Pehle Register karein.','err');return}
+      const u=us.find(x=>x.email===em&&x.password===pw);
       if(u){CU=u;L.s('mockUser',u);await bootApp();}
-      else{setMsg('loginMsg','❌ Email ya password galat!','err');}
+      else{setMsg('loginMsg','❌ Password galat hai! Dobara check karein.','err');}
     }
   }catch(e){
-    const m={'auth/wrong-password':'❌ Password galat!','auth/user-not-found':'❌ Account nahi mila!','auth/invalid-credential':'❌ Email/password galat!'};
-    setMsg('loginMsg',m[e.code]||'❌ '+e.message,'err');
+    const m={
+      'auth/wrong-password':'❌ Password galat hai! Dobara check karein.',
+      'auth/user-not-found':'❌ Yeh Email registered nahi hai! Pehle Register karein.',
+      'auth/invalid-credential':'❌ Email ya Password galat hai! Dobara check karein.',
+      'auth/invalid-email':'⚠️ Sahi email format daalo! (jaise: abc@gmail.com)',
+      'auth/user-disabled':'❌ Yeh account disable kar diya gaya hai. Admin se contact karein.',
+      'auth/too-many-requests':'⚠️ Bahut zyada galat attempts! Thodi der baad try karein.',
+      'auth/network-request-failed':'⚠️ Internet connection check karein!'
+    };
+    setMsg('loginMsg',m[e.code]||'❌ Login failed: '+e.message,'err');
   }finally{
     btn.disabled=false;btn.innerHTML='Login करें';
   }
@@ -1195,22 +1216,41 @@ async function doSignup(){
   const ds=document.getElementById('sDist').value.trim();const pw=document.getElementById('sPass').value;
   const btn=document.getElementById('btnSignup');
   setMsg('signupMsg','','');
-  if(!nm||!em||!mb||!cl||!pw){setMsg('signupMsg','⚠️ Sab * fields required!','err');return}
-  if(mb.length!==10){setMsg('signupMsg','⚠️ Mobile 10 digits!','err');return}
-  if(pw.length<6){setMsg('signupMsg','⚠️ Password min 6 chars!','err');return}
+  if(!nm){setMsg('signupMsg','⚠️ Apna Naam daalo!','err');return}
+  if(!em){setMsg('signupMsg','⚠️ Email daalo!','err');return}
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)){setMsg('signupMsg','⚠️ Sahi email format daalo! (jaise: abc@gmail.com)','err');return}
+  if(!mb){setMsg('signupMsg','⚠️ Mobile number daalo!','err');return}
+  if(mb.length!==10){setMsg('signupMsg','⚠️ Mobile number 10 digits ka hona chahiye!','err');return}
+  if(!/^[6-9]\d{9}$/.test(mb)){setMsg('signupMsg','⚠️ Sahi mobile number daalo!','err');return}
+  if(!cl){setMsg('signupMsg','⚠️ Apni Class select karo!','err');return}
+  if(!pw){setMsg('signupMsg','⚠️ Password daalo!','err');return}
+  if(pw.length<6){setMsg('signupMsg','⚠️ Password kam se kam 6 characters ka hona chahiye!','err');return}
   btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Creating...';
   const prof={name:nm,email:em,mobile:mb,cls:cl,district:ds||'Bihar',enrolled:[],joinedAt:new Date().toISOString().slice(0,10)};
   try{
     if(FBOn){
+      // Pehle check karo ki email already registered hai ya nahi
+      const methods=await auth.fetchSignInMethodsForEmail(em);
+      if(methods&&methods.length>0){
+        setMsg('signupMsg','❌ Yeh Email pehle se registered hai! Login karein ya doosri Email use karein.','err');
+        btn.disabled=false;btn.innerHTML='Account बनाएं 🎉';return;
+      }
       const c=await auth.createUserWithEmailAndPassword(em,pw);await c.user.updateProfile({displayName:nm});await saveUser(c.user.uid,prof);CU=c.user;CUD=prof;await bootApp();
     } else {
       const us=L.g('registeredUsers')||[];
-      if(us.find(u=>u.email===em)){setMsg('signupMsg','❌ Email registered hai! Login karein.','err');return}
+      if(us.find(u=>u.email===em)){setMsg('signupMsg','❌ Yeh Email pehle se registered hai! Login karein ya doosri Email use karein.','err');return}
       const uid='uid'+Date.now();const nu={uid,email:em,password:pw,...prof};us.push(nu);L.s('registeredUsers',us);L.s('up_'+uid,prof);L.s('mockUser',nu);CU=nu;CUD=prof;await bootApp();
     }
   }catch(e){
-    const m={'auth/email-already-in-use':'❌ Email already registered!','auth/weak-password':'❌ Password weak!'};
-    setMsg('signupMsg',m[e.code]||'❌ '+e.message,'err');
+    const m={
+      'auth/email-already-in-use':'❌ Yeh Email pehle se registered hai! Login karein ya doosri Email use karein.',
+      'auth/weak-password':'❌ Password weak hai! Kam se kam 6 characters daalo.',
+      'auth/invalid-email':'⚠️ Sahi email format daalo! (jaise: abc@gmail.com)',
+      'auth/operation-not-allowed':'❌ Registration filhaal band hai. Admin se contact karein.',
+      'auth/network-request-failed':'⚠️ Internet connection check karein!',
+      'auth/too-many-requests':'⚠️ Bahut zyada attempts! Thodi der baad try karein.'
+    };
+    setMsg('signupMsg',m[e.code]||'❌ Registration failed: '+e.message,'err');
   }finally{
     btn.disabled=false;btn.innerHTML='Account बनाएं 🎉';
   }
