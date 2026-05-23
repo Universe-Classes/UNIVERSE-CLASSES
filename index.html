@@ -783,6 +783,16 @@ button,input,select,textarea{font-family:'Poppins',sans-serif;outline:none}
           <select id="am_s"><option>Mathematics</option><option>Science</option><option>Social Science</option><option>Hindi</option><option>English</option><option>Sanskrit</option><option>All Subjects</option></select>
           <label>PDF / Google Drive Link *</label>
           <input type="text" id="am_l" placeholder="Paste Google Drive or PDF URL here"/>
+          <label>Thumbnail Image (optional)</label>
+          <div class="ubox" onclick="document.getElementById('amThF').click()">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <p>Thumbnail upload karein (max 2MB)</p>
+            <input type="file" id="amThF" accept="image/*" onchange="prevThumb(this,'amThP','amThD')"/>
+          </div>
+          <img id="amThP" class="tprev"/>
+          <input type="hidden" id="amThD"/>
+          <label>Price (optional)</label>
+          <input type="text" id="am_price" placeholder="e.g. ₹99 or FREE"/>
           <label>Description (optional)</label>
           <input type="text" id="am_desc" placeholder="e.g. Chapter 1-5 complete notes"/>
           <button class="btn-add" onclick="adAddMat()">💾 Material Add करें</button>
@@ -1475,7 +1485,17 @@ function renderMatPageWithOptions(catKey){
   if(!freeItems.length){
     html+=`<div class="mat-empty" style="padding:12px"><i class="fas fa-file-pdf"></i><p>Koi free material nahi hai abhi</p></div>`;
   } else {
-    html+=freeItems.map(m=>`<div class="pdf-row" onclick="openPDF('${m.link||''}','${(m.title||'').replace(/'/g,'&#39;')}')"><div class="pdf-ic" style="background:${cat.color}18">${cat.icon}</div><div style="flex:1"><h4>${m.title||''}</h4><p>${m.cls||''} ${m.subject?'| '+m.subject:''} ${m.desc?'— '+m.desc:''}</p></div><i class="fas fa-external-link-alt pdf-arr"></i></div>`).join('');
+    html+=freeItems.map(m=>`
+      <div class="pdf-row" onclick="openPDF('${m.link||''}','${(m.title||'').replace(/'/g,'&#39;')}')" style="align-items:flex-start;gap:10px">
+        ${m.thumb?`<img src="${m.thumb}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;flex-shrink:0" onerror="this.style.display='none'"/>`:`<div class="pdf-ic" style="background:${cat.color}18">${cat.icon}</div>`}
+        <div style="flex:1">
+          <h4>${m.title||''}</h4>
+          <p>${m.cls||''} ${m.subject?'| '+m.subject:''}</p>
+          ${m.desc?`<p style="color:var(--txl);font-size:11px;margin-top:2px">${m.desc}</p>`:''}
+          ${m.price?`<span style="background:#e8f5e9;color:#2e7d32;font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px">${m.price}</span>`:''}
+        </div>
+        <i class="fas fa-external-link-alt pdf-arr"></i>
+      </div>`).join('');
   }
   html+='</div>';
 
@@ -1764,10 +1784,14 @@ async function adAddMat(){
   const s=document.getElementById('am_s').value;
   const l=document.getElementById('am_l').value.trim();
   const desc=document.getElementById('am_desc').value.trim();
-  await fbAdd('materials',{title:t,cat,cls:c,subject:s,link:l||'#',desc});
+  const thumb=document.getElementById('amThD').value||'';
+  const price=document.getElementById('am_price').value.trim();
+  await fbAdd('materials',{title:t,cat,cls:c,subject:s,link:l||'#',desc,thumb,price:price||''});
   AM=await fbGet('materials');renderMaterialGrid();renderAdMats();
-  if(curMatCat===cat)renderMatPageItems(cat);
-  document.getElementById('am_t').value='';document.getElementById('am_l').value='';document.getElementById('am_desc').value='';
+  if(curMatCat===cat)renderMatPageWithOptions(cat);
+  document.getElementById('am_t').value='';document.getElementById('am_l').value='';
+  document.getElementById('am_desc').value='';document.getElementById('am_price').value='';
+  document.getElementById('amThP').style.display='none';document.getElementById('amThD').value='';
   document.getElementById('adStM').textContent=AM.length;showAOk('aoM');
 }
 function renderAdMats(){
@@ -2555,43 +2579,54 @@ async function giveStudentAccess(){
   const courseId = document.getElementById('sacCourseSelect').value;
   if(!courseId){showToast('⚠️ Course select karein!');return}
   
-  if(!sacStudentEnrolled.includes(courseId)){
-    sacStudentEnrolled.push(courseId);
+  // Firebase se fresh data lo — phir update karo
+  let currentEnrolled = [...sacStudentEnrolled];
+  if(FBOn && rtdb){
+    try{
+      const snap = await rtdb.ref('users/'+sacStudentId).once('value');
+      const existing = snap.exists() ? snap.val() : {};
+      currentEnrolled = existing.enrolled || sacStudentEnrolled;
+    }catch(e){}
   }
-  
-  // Update localStorage up_ profile
-  const ud = L.g('up_'+sacStudentId)||{};
-  ud.enrolled = sacStudentEnrolled;
-  L.s('up_'+sacStudentId, ud);
 
-  // Update registeredUsers array in localStorage (for offline/mock users)
+  // Naya course add karo agar pehle se nahi hai
+  if(!currentEnrolled.includes(courseId)){
+    currentEnrolled.push(courseId);
+  } else {
+    showToast('⚠️ Yeh course already enrolled hai!');
+    return;
+  }
+
+  // Firebase update karo
+  if(FBOn && rtdb){
+    try{
+      const snap = await rtdb.ref('users/'+sacStudentId).once('value');
+      const existing = snap.exists() ? snap.val() : {};
+      existing.enrolled = currentEnrolled;
+      await rtdb.ref('users/'+sacStudentId).set(existing);
+    }catch(e){showToast('❌ Firebase error: '+e.message);return}
+  }
+  if(FBOn && db){
+    try{
+      await db.collection('users').doc(sacStudentId).update({
+        enrolled: firebase.firestore.FieldValue.arrayUnion(courseId)
+      });
+    }catch(e){}
+  }
+
+  // localStorage bhi update karo
+  const ud = L.g('up_'+sacStudentId)||{};
+  ud.enrolled = currentEnrolled;
+  L.s('up_'+sacStudentId, ud);
   const regUsers = L.g('registeredUsers')||[];
   const ruIdx = regUsers.findIndex(x=>(x.uid||x.id)===sacStudentId);
   if(ruIdx !== -1){
-    regUsers[ruIdx].enrolled = sacStudentEnrolled;
+    regUsers[ruIdx].enrolled = currentEnrolled;
     L.s('registeredUsers', regUsers);
   }
-  
-  if(FBOn){
-    if(rtdb){
-      try{
-        const snap = await rtdb.ref('users/'+sacStudentId).once('value');
-        const existing = snap.exists() ? snap.val() : {};
-        existing.enrolled = sacStudentEnrolled;
-        await rtdb.ref('users/'+sacStudentId).set(existing);
-      }catch(e){}
-    }
-    if(db){
-      try{
-        await db.collection('users').doc(sacStudentId).update({
-          enrolled: firebase.firestore.FieldValue.arrayUnion(courseId)
-        });
-      }catch(e){}
-    }
-  }
-  
+
+  sacStudentEnrolled = currentEnrolled;
   showToast('✅ Course access diya gaya!');
-  // Modal band mat karo — refresh karke aur courses de sako
   const studentName = document.getElementById('sacStudentName').textContent;
   openStudentAccess(sacStudentId, studentName, sacStudentEnrolled);
   loadStudentsList();
