@@ -1907,9 +1907,18 @@ async function loadStudentsList(){
       </div>
       <div style="display:flex;gap:5px;flex-shrink:0;flex-wrap:wrap">
         <span class="stu-badge">Class ${u.cls||'?'}</span>
-        <button onclick="openStudentAccess('${u.uid||u.id}','${(u.name||u.email||'Student').replace(/'/g,'')}',${JSON.stringify(u.enrolled||[])})" style="background:var(--pl);color:var(--p);border:none;padding:4px 9px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">🎓 Access</button>
+        <button class="stu-access-btn" data-uid="${u.uid||u.id}" data-name="${(u.name||u.email||'Student').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}" style="background:var(--pl);color:var(--p);border:none;padding:4px 9px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">🎓 Access</button>
       </div>
     </div>`).join('');
+  // Event delegation - Access button click
+  el.onclick = function(e){
+    const btn = e.target.closest('.stu-access-btn');
+    if(btn){
+      const uid = btn.getAttribute('data-uid');
+      const name = btn.getAttribute('data-name');
+      openStudentAccess(uid, name, []);
+    }
+  };
 }
 
 // ---- SETTINGS ----
