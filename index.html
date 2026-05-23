@@ -755,14 +755,26 @@ button,input,select,textarea{font-family:'Poppins',sans-serif;outline:none}
           <div class="af-row">
             <div><label>Category *</label>
               <select id="am_cat">
-                <option value="syllabus">📋 Syllabus</option>
-                <option value="ncert">📗 NCERT Books</option>
-                <option value="model">📝 Model Papers</option>
-                <option value="notes">📄 Free Notes</option>
-                <option value="science">🔬 Science Notes</option>
-                <option value="math">📐 Math Formulas</option>
-                <option value="social">🌍 Social Science</option>
-                <option value="quiz">🧪 Daily Quiz</option>
+                <optgroup label="📄 Free Materials">
+                  <option value="syllabus">📋 Syllabus (Free)</option>
+                  <option value="ncert">📗 NCERT Books (Free)</option>
+                  <option value="model">📝 Model Papers (Free)</option>
+                  <option value="notes">📄 Notes (Free)</option>
+                  <option value="science">🔬 Science Notes (Free)</option>
+                  <option value="math">📐 Math Formulas (Free)</option>
+                  <option value="social">🌍 Social Science (Free)</option>
+                  <option value="quiz">🧪 Daily Quiz (Free)</option>
+                </optgroup>
+                <optgroup label="🔐 Paid Materials">
+                  <option value="paid_syllabus">🔐 Syllabus (Paid)</option>
+                  <option value="paid_ncert">🔐 NCERT Books (Paid)</option>
+                  <option value="paid_model">🔐 Model Papers (Paid)</option>
+                  <option value="paid_notes">🔐 Notes (Paid)</option>
+                  <option value="paid_science">🔐 Science Notes (Paid)</option>
+                  <option value="paid_math">🔐 Math Formulas (Paid)</option>
+                  <option value="paid_social">🔐 Social Science (Paid)</option>
+                  <option value="paid_quiz">🔐 Daily Quiz (Paid)</option>
+                </optgroup>
               </select>
             </div>
             <div><label>Class</label><select id="am_c"><option value="9th">9th</option><option value="10th">10th</option><option value="both">Both</option></select></div>
@@ -958,11 +970,21 @@ const MAT_CATS={
   syllabus:{icon:'📋',label:'Syllabus',desc:'Bihar Board 9th & 10th',color:'#1565c0'},
   ncert:{icon:'📗',label:'NCERT Books',desc:'Free PDF Download',color:'#2e7d32'},
   model:{icon:'📝',label:'Model Papers',desc:'Bihar Board PYQ',color:'#6a1b9a'},
-  notes:{icon:'📄',label:'Free Notes',desc:'Chapter-wise Notes',color:'#e65100'},
+  notes:{icon:'📄',label:'Notes',desc:'Chapter-wise Notes',color:'#e65100'},
   science:{icon:'🔬',label:'Science Notes',desc:'Class 9th & 10th',color:'#00838f'},
   math:{icon:'📐',label:'Math Formulas',desc:'All Formulas PDF',color:'#c62828'},
   social:{icon:'🌍',label:'Social Science',desc:'History, Geography',color:'#1b5e20'},
-  quiz:{icon:'🧪',label:'Daily Quiz',desc:'Practice MCQs',color:'#4a148c'}
+  quiz:{icon:'🧪',label:'Daily Quiz',desc:'Practice MCQs',color:'#4a148c'},
+  // Paid versions
+  paid_syllabus:{icon:'🔐',label:'Syllabus',desc:'Premium',color:'#1565c0',paid:true,parentKey:'syllabus'},
+  paid_ncert:{icon:'🔐',label:'NCERT Books',desc:'Premium',color:'#2e7d32',paid:true,parentKey:'ncert'},
+  paid_model:{icon:'🔐',label:'Model Papers',desc:'Premium',color:'#6a1b9a',paid:true,parentKey:'model'},
+  paid_notes:{icon:'🔐',label:'Notes',desc:'Premium',color:'#e65100',paid:true,parentKey:'notes'},
+  paid_science:{icon:'🔐',label:'Science Notes',desc:'Premium',color:'#00838f',paid:true,parentKey:'science'},
+  paid_math:{icon:'🔐',label:'Math Formulas',desc:'Premium',color:'#c62828',paid:true,parentKey:'math'},
+  paid_social:{icon:'🔐',label:'Social Science',desc:'Premium',color:'#1b5e20',paid:true,parentKey:'social'},
+  paid_quiz:{icon:'🧪',label:'Daily Quiz',desc:'Premium',color:'#4a148c',paid:true,parentKey:'quiz'},
+  paidnotes:{icon:'🔐',label:'Paid Notes',desc:'Premium Study Material',color:'#b71c1c',paid:true}
 };
 ['courses','notifs','toppers','materials'].forEach(k=>{if(!L.g(k))L.s(k,DEFS[k]);});
 if(!L.g('settings'))L.s('settings',DEFS.settings);
@@ -1417,8 +1439,10 @@ function renderNotifsFull(){
 }
 function updateNotifDot(){const has=AN.some(n=>n.isNew);document.getElementById('navDot').style.display=has?'block':'none';document.getElementById('bndot').style.display=has?'block':'none';}
 function renderMaterialGrid(){
-  document.getElementById('matGrid').innerHTML=Object.entries(MAT_CATS).map(([key,cat])=>{
-    const count=AM.filter(m=>m.cat===key).length;
+  // Sirf parent categories dikhao (paid_ wale nahi)
+  const parentCats = Object.entries(MAT_CATS).filter(([k,v])=>!v.paid);
+  document.getElementById('matGrid').innerHTML=parentCats.map(([key,cat])=>{
+    const count=AM.filter(m=>m.cat===key||m.cat==='paid_'+key).length;
     return `<div class="mcard" onclick="openMatPage('${key}')"><div class="micon">${cat.icon}</div><h4>${cat.label}</h4><p>${cat.desc}</p>${count>0?`<div class="mc-count">${count} item${count>1?'s':''}</div>`:''}</div>`;
   }).join('');
 }
@@ -1427,14 +1451,78 @@ function openMatPage(catKey){
   document.getElementById('mdtTitle').textContent=cat.label;
   document.getElementById('mdtSub').textContent=cat.desc+' | Bihar Board';
   document.getElementById('mdtIcon').textContent=cat.icon;
-  renderMatPageItems(catKey);
+  // Free aur Paid dono options dikhao
+  renderMatPageWithOptions(catKey);
   openPg('pgMatDetail');
+}
+function renderMatPageWithOptions(catKey){
+  const el=document.getElementById('mdtBody');
+  const cat=MAT_CATS[catKey]||{};
+  const paidKey='paid_'+catKey;
+  const freeItems=AM.filter(m=>m.cat===catKey);
+  const paidItems=AM.filter(m=>m.cat===paidKey);
+  const hasNotesAccess=CUD&&(CUD.notesAccess||[]).includes(paidKey);
+
+  let html='';
+
+  // FREE section
+  html+=`<div style="margin-bottom:8px">
+    <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:#e8f5e9;border-radius:10px;margin-bottom:10px">
+      <span style="font-size:18px">📄</span>
+      <div><div style="font-weight:700;font-size:13px;color:#2e7d32">Free ${cat.label}</div>
+      <div style="font-size:11px;color:#4caf50">${freeItems.length} item${freeItems.length!==1?'s':''} available</div></div>
+    </div>`;
+  if(!freeItems.length){
+    html+=`<div class="mat-empty" style="padding:12px"><i class="fas fa-file-pdf"></i><p>Koi free material nahi hai abhi</p></div>`;
+  } else {
+    html+=freeItems.map(m=>`<div class="pdf-row" onclick="openPDF('${m.link||''}','${(m.title||'').replace(/'/g,'&#39;')}')"><div class="pdf-ic" style="background:${cat.color}18">${cat.icon}</div><div style="flex:1"><h4>${m.title||''}</h4><p>${m.cls||''} ${m.subject?'| '+m.subject:''} ${m.desc?'— '+m.desc:''}</p></div><i class="fas fa-external-link-alt pdf-arr"></i></div>`).join('');
+  }
+  html+='</div>';
+
+  // PAID section
+  html+=`<div style="margin-top:16px">
+    <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:#fce4ec;border-radius:10px;margin-bottom:10px">
+      <span style="font-size:18px">🔐</span>
+      <div><div style="font-weight:700;font-size:13px;color:#b71c1c">Paid ${cat.label}</div>
+      <div style="font-size:11px;color:#e57373">${paidItems.length} item${paidItems.length!==1?'s':''} available</div></div>
+    </div>`;
+
+  if(!hasNotesAccess&&!isAdmin){
+    html+=`<div style="text-align:center;padding:20px 16px">
+      <p style="color:var(--txl);font-size:13px;margin-bottom:16px">Yeh premium notes hain.<br/>Access ke liye WhatsApp par contact karein.</p>
+      <button onclick="openNotesEnroll('${paidKey}')" style="background:#25D366;color:#fff;border:none;padding:12px 24px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;margin:0 auto">
+        <i class="fab fa-whatsapp" style="font-size:18px"></i> WhatsApp par Contact Karein
+      </button>
+    </div>`;
+  } else if(!paidItems.length){
+    html+=`<div class="mat-empty" style="padding:12px"><i class="fas fa-file-pdf"></i><p>Koi paid material nahi hai abhi</p></div>`;
+  } else {
+    html+=paidItems.map(m=>`<div class="pdf-row" onclick="openPDF('${m.link||''}','${(m.title||'').replace(/'/g,'&#39;')}')"><div class="pdf-ic" style="background:#b71c1c18">🔐</div><div style="flex:1"><h4>${m.title||''}</h4><p>${m.cls||''} ${m.subject?'| '+m.subject:''} ${m.desc?'— '+m.desc:''}</p></div><i class="fas fa-external-link-alt pdf-arr"></i></div>`).join('');
+  }
+  html+='</div>';
+
+  el.innerHTML=html;
 }
 function renderMatPageItems(catKey){
   const el=document.getElementById('mdtBody');
   const items=AM.filter(m=>m.cat===catKey);
+  const cat=MAT_CATS[catKey]||{};
+  const isPaid=cat.paid===true;
+  const hasNotesAccess=CUD&&(CUD.notesAccess||[]).includes(catKey);
   if(!items.length){el.innerHTML=`<div class="mat-empty"><i class="fas fa-file-pdf"></i><p>Koi material nahi hai.<br/>Admin se add karwayein!</p></div>`;return}
-  el.innerHTML=items.map(m=>{const cat=MAT_CATS[m.cat]||{icon:'📄',color:'#1565c0'};return `<div class="pdf-row" onclick="openPDF('${m.link||''}','${(m.title||'').replace(/'/g,'&#39;')}')"><div class="pdf-ic" style="background:${cat.color}18">${cat.icon}</div><div style="flex:1"><h4>${m.title||''}</h4><p>${m.cls||''} ${m.subject?'| '+m.subject:''} ${m.desc?'— '+m.desc:''}</p></div><i class="fas fa-external-link-alt pdf-arr"></i></div>`;}).join('');
+  if(isPaid&&!hasNotesAccess&&!isAdmin){
+    // Locked — show WhatsApp button
+    el.innerHTML=`<div style="text-align:center;padding:30px 16px">
+      <div style="font-size:48px;margin-bottom:12px">🔐</div>
+      <h3 style="color:var(--tx);margin-bottom:8px">Paid Notes</h3>
+      <p style="color:var(--txl);font-size:13px;margin-bottom:20px">Yeh premium notes hain.<br/>Access ke liye WhatsApp par contact karein.</p>
+      <button onclick="openNotesEnroll('${catKey}')" style="background:#25D366;color:#fff;border:none;padding:12px 24px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;margin:0 auto">
+        <i class="fab fa-whatsapp" style="font-size:18px"></i> WhatsApp par Contact Karein
+      </button>
+    </div>`;
+    return;
+  }
+  el.innerHTML=items.map(m=>{const mc=MAT_CATS[m.cat]||{icon:'📄',color:'#1565c0'};return `<div class="pdf-row" onclick="openPDF('${m.link||''}','${(m.title||'').replace(/'/g,'&#39;')}')"><div class="pdf-ic" style="background:${mc.color}18">${mc.icon}</div><div style="flex:1"><h4>${m.title||''}</h4><p>${m.cls||''} ${m.subject?'| '+m.subject:''} ${m.desc?'— '+m.desc:''}</p></div><i class="fas fa-external-link-alt pdf-arr"></i></div>`;}).join('');
 }
 function openPDF(url,title){
   if(!url||url==='#'){showToast('⚠️ PDF link available nahi hai');return}
@@ -1442,6 +1530,17 @@ function openPDF(url,title){
   let eu=url;
   if(url.includes('drive.google.com')){const m=url.match(/\/d\/([a-zA-Z0-9_-]+)/)||url.match(/[?&]id=([a-zA-Z0-9_-]+)/);if(m)eu=`https://drive.google.com/file/d/${m[1]}/preview?usp=sharing&rm=minimal`;}
   document.getElementById('pdfFrame').src=eu;document.getElementById('pdfOv').classList.add('on');
+}
+function openNotesEnroll(catKey){
+  const cat=MAT_CATS[catKey]||{};
+  const waNo=(AS.wa||'+91 8825270186').replace(/[^0-9]/g,'');
+  const msg=encodeURIComponent('Hello! I want to buy '+cat.label+' from Universe Classes\nName: '+(CUD&&CUD.name||CU&&CU.displayName||'')+'\nClass: '+(CUD&&CUD.cls||''));
+  const waUrl='whatsapp://send?phone='+waNo+'&text='+msg;
+  const waWebUrl='https://wa.me/'+waNo+'?text='+msg;
+  const a=document.createElement('a');
+  a.href=waUrl;a.style.display='none';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(()=>{if(document.visibilityState!=='hidden'){window.open(waWebUrl,'_blank');}},1000);
 }
 function closePDF(){document.getElementById('pdfOv').classList.remove('on');document.getElementById('pdfFrame').src='';}
 function renderProfile(){
@@ -2364,16 +2463,19 @@ async function openStudentAccess(studentId, studentName, enrolled){
   sacStudentId = studentId;
   document.getElementById('sacStudentName').textContent = studentName;
   // Always fetch fresh data from Firebase
+  let userData = {};
   if(FBOn && rtdb){
     try{
       const snap = await rtdb.ref('users/'+studentId).once('value');
-      sacStudentEnrolled = snap.exists() ? (snap.val().enrolled || []) : (enrolled || []);
+      userData = snap.exists() ? snap.val() : {};
+      sacStudentEnrolled = userData.enrolled || enrolled || [];
     }catch(e){ sacStudentEnrolled = enrolled || []; }
   } else {
     sacStudentEnrolled = enrolled || [];
   }
+  const notesAccess = userData.notesAccess || [];
   
-  // Populate enrolled list
+  // Populate enrolled courses list
   const el = document.getElementById('sacEnrolledList');
   if(!sacStudentEnrolled.length){
     el.innerHTML = '<div style="font-size:12px;color:var(--txl);padding:8px">Koi course enrolled nahi</div>';
@@ -2387,15 +2489,66 @@ async function openStudentAccess(studentId, studentName, enrolled){
     }).join('');
   }
   
-  // Populate course dropdown (ALL courses - enrolled ones marked)
+  // Populate course dropdown
   const sel = document.getElementById('sacCourseSelect');
   sel.innerHTML = '<option value="">— Course Select करें —</option>';
   AC.forEach(c=>{
     const isEnrolled = sacStudentEnrolled.includes(c.id);
     sel.innerHTML += `<option value="${c.id}" ${isEnrolled?'disabled style="color:gray"':''}>${c.name}${isEnrolled?' (Already Enrolled)':''}</option>`;
   });
+
+  // Populate notes access list
+  const nel = document.getElementById('sacNotesAccessList');
+  const paidCats = Object.entries(MAT_CATS).filter(([k,v])=>v.paid);
+  if(!notesAccess.length){
+    nel.innerHTML = '<div style="padding:4px 0">Koi notes access nahi diya</div>';
+  } else {
+    nel.innerHTML = notesAccess.map(k=>{
+      const cat = MAT_CATS[k]||{icon:'🔐',label:k};
+      return `<div class="stu-enroll-row"><strong>${cat.icon} ${cat.label}</strong><button class="btn-revoke" onclick="revokeNotesAccess('${k}')">🚫 Revoke</button></div>`;
+    }).join('');
+  }
+  // Update notes dropdown — already accessed ones disabled
+  const nsel = document.getElementById('sacNotesSelect');
+  nsel.innerHTML = '<option value="">— Notes Select करें —</option>';
+  paidCats.forEach(([k,v])=>{
+    const has = notesAccess.includes(k);
+    nsel.innerHTML += `<option value="${k}" ${has?'disabled style="color:gray"':''}>${v.icon} ${v.label}${has?' (Access Diya)':''}</option>`;
+  });
   
   openModal('studentAccessMod');
+}
+
+async function giveNotesAccess(){
+  const notesKey = document.getElementById('sacNotesSelect').value;
+  if(!notesKey){showToast('⚠️ Notes select karein!');return}
+  if(FBOn && rtdb){
+    try{
+      const snap = await rtdb.ref('users/'+sacStudentId).once('value');
+      const existing = snap.exists() ? snap.val() : {};
+      const notesAccess = existing.notesAccess || [];
+      if(!notesAccess.includes(notesKey)) notesAccess.push(notesKey);
+      existing.notesAccess = notesAccess;
+      await rtdb.ref('users/'+sacStudentId).set(existing);
+      showToast('✅ Notes access diya gaya!');
+      const studentName = document.getElementById('sacStudentName').textContent;
+      openStudentAccess(sacStudentId, studentName, sacStudentEnrolled);
+    }catch(e){showToast('❌ Error: '+e.message);}
+  }
+}
+
+async function revokeNotesAccess(notesKey){
+  if(FBOn && rtdb){
+    try{
+      const snap = await rtdb.ref('users/'+sacStudentId).once('value');
+      const existing = snap.exists() ? snap.val() : {};
+      existing.notesAccess = (existing.notesAccess||[]).filter(k=>k!==notesKey);
+      await rtdb.ref('users/'+sacStudentId).set(existing);
+      showToast('✅ Notes access revoke kiya!');
+      const studentName = document.getElementById('sacStudentName').textContent;
+      openStudentAccess(sacStudentId, studentName, sacStudentEnrolled);
+    }catch(e){showToast('❌ Error: '+e.message);}
+  }
 }
 
 async function giveStudentAccess(){
@@ -2420,7 +2573,6 @@ async function giveStudentAccess(){
   }
   
   if(FBOn){
-    // Fix: Update RTDB first (getUser reads RTDB first)
     if(rtdb){
       try{
         const snap = await rtdb.ref('users/'+sacStudentId).once('value');
@@ -2429,7 +2581,6 @@ async function giveStudentAccess(){
         await rtdb.ref('users/'+sacStudentId).set(existing);
       }catch(e){}
     }
-    // Also update Firestore
     if(db){
       try{
         await db.collection('users').doc(sacStudentId).update({
@@ -2439,9 +2590,11 @@ async function giveStudentAccess(){
     }
   }
   
-  closeModal('studentAccessMod');
-  showToast('✅ Access diya gaya!');
-  loadStudentsList(); // Refresh list
+  showToast('✅ Course access diya gaya!');
+  // Modal band mat karo — refresh karke aur courses de sako
+  const studentName = document.getElementById('sacStudentName').textContent;
+  openStudentAccess(sacStudentId, studentName, sacStudentEnrolled);
+  loadStudentsList();
 }
 
 async function revokeAccess(courseId){
@@ -2617,10 +2770,26 @@ async function revokeAccess(courseId){
       <select id="sacCourseSelect" style="width:100%;padding:9px;border:1.5px solid var(--bd);border-radius:8px;font-size:13px;margin-bottom:10px">
         <option value="">— Course Select करें —</option>
       </select>
-      <div class="macts">
+      <div class="macts" style="margin-bottom:12px">
         <button class="btn-cc" onclick="closeModal('studentAccessMod')">Close</button>
-        <button class="btn-cf" onclick="giveStudentAccess()">✅ Access दें</button>
+        <button class="btn-cf" onclick="giveStudentAccess()">✅ Course Access दें</button>
       </div>
+      <hr style="margin:12px 0;border-color:var(--bd)"/>
+      <div style="margin-bottom:8px;font-size:12px;font-weight:600;color:#b71c1c">🔐 Paid Notes Access:</div>
+      <div id="sacNotesAccessList" style="margin-bottom:8px;font-size:12px;color:var(--txl)"></div>
+      <select id="sacNotesSelect" style="width:100%;padding:9px;border:1.5px solid var(--bd);border-radius:8px;font-size:13px;margin-bottom:10px">
+        <option value="">— Notes Select करें —</option>
+        <option value="paid_syllabus">🔐 Syllabus (Paid)</option>
+        <option value="paid_ncert">🔐 NCERT Books (Paid)</option>
+        <option value="paid_model">🔐 Model Papers (Paid)</option>
+        <option value="paid_notes">🔐 Notes (Paid)</option>
+        <option value="paid_science">🔐 Science Notes (Paid)</option>
+        <option value="paid_math">🔐 Math Formulas (Paid)</option>
+        <option value="paid_social">🔐 Social Science (Paid)</option>
+        <option value="paid_quiz">🔐 Daily Quiz (Paid)</option>
+        <option value="paidnotes">🔐 Paid Notes (General)</option>
+      </select>
+      <button class="btn-cf" style="width:100%;background:#b71c1c" onclick="giveNotesAccess()">🔐 Notes Access दें</button>
     </div>
   </div>
 </div>
