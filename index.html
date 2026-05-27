@@ -66,7 +66,6 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"></script>
 <style>
 :root{
   --p:#1565c0;--p2:#1976d2;--pl:#e3f2fd;
@@ -1191,8 +1190,42 @@ async function getAllStudents(){
   return L.g('registeredUsers')||[];
 }
 async function loadData(){
-  [AC,AN,AT,AM]=await Promise.all([fbGet('courses'),fbGet('notifs'),fbGet('toppers'),fbGet('materials')]);
-  AS=await getSettings();
+  // Sirf lightweight cache — sirf IDs aur names (full data nahi)
+  const cachedCourses = L.g('courses_lite');
+  const cachedNotifs = L.g('notifs_lite');
+  const cachedToppers = L.g('toppers_lite');
+
+  if(cachedCourses) AC = cachedCourses;
+  if(cachedNotifs) AN = cachedNotifs;
+  if(cachedToppers) AT = cachedToppers;
+
+  // Cached data se turant render karo
+  if(AC.length || AN.length || AT.length){
+    renderHCourses(); renderHToppers(); renderHNotifs();
+    renderAllCourses(); renderMaterialGrid();
+    renderProfile();
+  }
+
+  // Background mein Firebase se fresh data lo
+  [AC,AN,AT,AM] = await Promise.all([
+    fbGet('courses'), fbGet('notifs'), fbGet('toppers'), fbGet('materials')
+  ]);
+  AS = await getSettings();
+
+  // Sirf lite version cache karo (thumbnails chhod do — woh bade hote hain)
+  try{
+    const coursesLite = AC.map(c=>({id:c.id,name:c.name,cls:c.cls,price:c.price,badge:c.badge,subject:c.subject}));
+    const notifsLite = AN.slice(0,10).map(n=>({id:n.id,title:n.title,date:n.date}));
+    const toppersLite = AT.slice(0,6).map(t=>({id:t.id,name:t.name,cls:t.cls,rank:t.rank,marks:t.marks}));
+    localStorage.setItem('uc_courses_lite', JSON.stringify(coursesLite));
+    localStorage.setItem('uc_notifs_lite', JSON.stringify(notifsLite));
+    localStorage.setItem('uc_toppers_lite', JSON.stringify(toppersLite));
+  }catch(e){ /* ignore cache errors */ }
+
+  // Fresh data se update karo
+  renderHCourses(); renderHToppers(); renderHNotifs();
+  renderAllCourses(); renderMaterialGrid();
+  renderProfile();
 }
 
 // AUTH
@@ -1508,12 +1541,29 @@ function renderMatPageWithOptions(catKey){
     </div>`;
 
   if(!hasNotesAccess&&!isAdmin){
-    html+=`<div style="text-align:center;padding:20px 16px">
-      <p style="color:var(--txl);font-size:13px;margin-bottom:16px">Yeh premium notes hain.<br/>Access ke liye WhatsApp par contact karein.</p>
-      <button onclick="openNotesEnroll('${paidKey}')" style="background:#25D366;color:#fff;border:none;padding:12px 24px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;margin:0 auto">
+    html+=`<div style="padding:8px 0">`;
+    if(!paidItems.length){
+      html+=`<div class="mat-empty" style="padding:12px"><i class="fas fa-file-pdf"></i><p>Koi paid material nahi hai abhi</p></div>`;
+    } else {
+      // Show items with lock — title, desc, price visible but content locked
+      html+=paidItems.map(m=>`
+        <div class="pdf-row" style="align-items:flex-start;gap:10px;opacity:0.9">
+          ${m.thumb?`<img src="${m.thumb}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;flex-shrink:0" onerror="this.style.display='none'"/>`:`<div class="pdf-ic" style="background:#b71c1c18">🔐</div>`}
+          <div style="flex:1">
+            <h4>${m.title||''}</h4>
+            <p>${m.cls||''} ${m.subject?'| '+m.subject:''}</p>
+            ${m.desc?`<p style="color:var(--txl);font-size:11px;margin-top:2px">${m.desc}</p>`:''}
+            ${m.price?`<span style="background:#fce4ec;color:#b71c1c;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;margin-top:4px;display:inline-block">${m.price}</span>`:''}
+          </div>
+          <span style="color:#b71c1c;font-size:18px">🔒</span>
+        </div>`).join('');
+    }
+    html+=`<div style="text-align:center;padding:16px">
+      <button onclick="openNotesEnroll('${paidKey}')" style="background:#25D366;color:#fff;border:none;padding:12px 24px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:8px">
         <i class="fab fa-whatsapp" style="font-size:18px"></i> WhatsApp par Contact Karein
       </button>
     </div>`;
+    html+=`</div>`;
   } else if(!paidItems.length){
     html+=`<div class="mat-empty" style="padding:12px"><i class="fas fa-file-pdf"></i><p>Koi paid material nahi hai abhi</p></div>`;
   } else {
@@ -2926,45 +2976,24 @@ async function revokeAccess(courseId){
   </div>
 </div>
 
-<!-- FCM Push Notifications -->
+<!-- OneSignal Web Push -->
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script>
-const FCM_SENDER_ID = '461911951937';
-const FCM_PROJECT_ID = 'universe-class-aap';
-const FCM_API_KEY = 'AIzaSyD8ZTZLXzGPxoKyWNr1xIBjC-MJye9wLV0';
-const FCM_APP_ID = '1:461911951937:web:d00659ff6b099bba53d4c0';
-const FCM_VAPID_KEY = 'BLgml-8tHKSOtDniHwqxJ278bgDYdVea2HXqm_2ISUMnSW_UyQetGZdEMxgpvoE73xX2EXFJQWmPTd4VIuexi7Y';
-
-async function initFCM(){
-  try{
-    if(!('serviceWorker' in navigator)||!('PushManager' in window))return;
-    const reg = await navigator.serviceWorker.register('/UNIVERSE-CLASSES/firebase-messaging-sw.js');
-    await navigator.serviceWorker.ready;
-    const permission = await Notification.requestPermission();
-    if(permission !== 'granted')return;
-    if(typeof firebase !== 'undefined' && firebase.messaging){
-      const messaging = firebase.messaging();
-      const token = await messaging.getToken({
-        vapidKey: FCM_VAPID_KEY,
-        serviceWorkerRegistration: reg
-      });
-      if(token && CU){
-        const uid = CU.uid || CU.id;
-        if(uid && rtdb){
-          await rtdb.ref('fcmTokens/'+uid).set({token, updatedAt: Date.now()});
-        }
-      }
-      messaging.onMessage((payload)=>{
-        const {title, body} = payload.notification || {};
-        showToast('🔔 '+(title||'Notification')+': '+(body||''));
-      });
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  OneSignalDeferred.push(async function(OneSignal) {
+    await OneSignal.init({
+      appId: "b587e66a-03fb-44c8-82ac-7e5cae4d036e",
+      notifyButton: { enable: false },
+      allowLocalhostAsSecureOrigin: true,
+    });
+    // Login ke baad notification permission maango
+    const permission = await OneSignal.Notifications.permission;
+    if(!permission){
+      setTimeout(async()=>{
+        await OneSignal.Slidedown.promptPush();
+      }, 5000);
     }
-  }catch(e){
-    console.warn('FCM init failed:',e.message);
-  }
-}
-
-// Init FCM after app loads
-window.addEventListener('load', ()=>{ setTimeout(initFCM, 3000); });
+  });
 </script>
 
 </body>
