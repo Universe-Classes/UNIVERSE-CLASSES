@@ -1525,7 +1525,7 @@ function renderMatPageWithOptions(catKey){
           <h4>${m.title||''}</h4>
           <p>${m.cls||''} ${m.subject?'| '+m.subject:''}</p>
           ${m.desc?`<p style="color:var(--txl);font-size:11px;margin-top:2px">${m.desc}</p>`:''}
-          ${m.price?`<span style="background:#e8f5e9;color:#2e7d32;font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px">${m.price}</span>`:''}
+          ${m.price?`<span style="background:#e8f5e9;color:#2e7d32;font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px">${m.price==='FREE'||m.price==='free'?'FREE':String(m.price).startsWith('₹')?m.price:'₹'+m.price}</span>`:''}
         </div>
         <i class="fas fa-external-link-alt pdf-arr"></i>
       </div>`).join('');
@@ -1553,7 +1553,7 @@ function renderMatPageWithOptions(catKey){
             <h4>${m.title||''}</h4>
             <p>${m.cls||''} ${m.subject?'| '+m.subject:''}</p>
             ${m.desc?`<p style="color:var(--txl);font-size:11px;margin-top:2px">${m.desc}</p>`:''}
-            ${m.price?`<span style="background:#fce4ec;color:#b71c1c;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;margin-top:4px;display:inline-block">${m.price}</span>`:''}
+            ${m.price?`<span style="background:#fce4ec;color:#b71c1c;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;margin-top:4px;display:inline-block">${m.price==='FREE'||m.price==='free'?'FREE':String(m.price).startsWith('₹')?m.price:'₹'+m.price}</span>`:''}
           </div>
           <span style="color:#b71c1c;font-size:18px">🔒</span>
         </div>`).join('');
