@@ -25,7 +25,7 @@
 <meta property="og:site_name" content="Universe Classes"/>
 <meta property="og:url" content="https://universe-classes.github.io/UNIVERSE-CLASSES/"/>
 
-<meta property="og:image" content="https://universe-classes.github.io/UNIVERSE-CLASSES/logo.jpeg"/>
+<meta property="og:image" content="https://universe-classes.github.io/UNIVERSE-CLASSES/UNIVERSE%20CLASSES/logo.jpeg"/>
 <meta property="og:image:width" content="1080"/>
 <meta property="og:image:height" content="608"/>
 
@@ -45,7 +45,7 @@
   "url": "https://universe-classes.github.io/UNIVERSE-CLASSES/",
   "logo": {
     "@type": "ImageObject",
-    "url": "https://universe-classes.github.io/UNIVERSE-CLASSES/logo.jpeg",
+    "url": "https://universe-classes.github.io/UNIVERSE-CLASSES/UNIVERSE%20CLASSES/logo.jpeg",
     "width": 512,
     "height": 512
   },
@@ -789,6 +789,7 @@ button,input,select,textarea{font-family:'Poppins',sans-serif;outline:none}
                   <option value="math">📐 Math Formulas (Free)</option>
                   <option value="social">🌍 Social Science (Free)</option>
                   <option value="quiz">🧪 Daily Quiz (Free)</option>
+                  <option value="hindi">📝 Hindi Notes (Free)</option>
                 </optgroup>
                 <optgroup label="🔐 Paid Materials">
                   <option value="paid_syllabus">🔐 Syllabus (Paid)</option>
@@ -799,6 +800,7 @@ button,input,select,textarea{font-family:'Poppins',sans-serif;outline:none}
                   <option value="paid_math">🔐 Math Formulas (Paid)</option>
                   <option value="paid_social">🔐 Social Science (Paid)</option>
                   <option value="paid_quiz">🔐 Daily Quiz (Paid)</option>
+                  <option value="paid_hindi">🔐 Hindi Notes (Paid)</option>
                 </optgroup>
               </select>
             </div>
@@ -1034,6 +1036,7 @@ const MAT_CATS={
   math:{icon:'📐',label:'Math Formulas',desc:'All Formulas PDF',color:'#c62828'},
   social:{icon:'🌍',label:'Social Science',desc:'History, Geography',color:'#1b5e20'},
   quiz:{icon:'🧪',label:'Daily Quiz',desc:'Practice MCQs',color:'#4a148c'},
+  hindi:{icon:'📝',label:'Hindi Notes',desc:'Class 9th & 10th',color:'#880e4f'},
   // Paid versions
   paid_syllabus:{icon:'🔐',label:'Syllabus',desc:'Premium',color:'#1565c0',paid:true,parentKey:'syllabus'},
   paid_ncert:{icon:'🔐',label:'NCERT Books',desc:'Premium',color:'#2e7d32',paid:true,parentKey:'ncert'},
@@ -1043,9 +1046,10 @@ const MAT_CATS={
   paid_math:{icon:'🔐',label:'Math Formulas',desc:'Premium',color:'#c62828',paid:true,parentKey:'math'},
   paid_social:{icon:'🔐',label:'Social Science',desc:'Premium',color:'#1b5e20',paid:true,parentKey:'social'},
   paid_quiz:{icon:'🧪',label:'Daily Quiz',desc:'Premium',color:'#4a148c',paid:true,parentKey:'quiz'},
+  paid_hindi:{icon:'🔐',label:'Hindi Notes',desc:'Premium',color:'#880e4f',paid:true,parentKey:'hindi'},
   paidnotes:{icon:'🔐',label:'Paid Notes',desc:'Premium Study Material',color:'#b71c1c',paid:true}
 };
-['courses','notifs','toppers','materials'].forEach(k=>{if(!L.g(k))L.s(k,DEFS[k]);});
+// DEFS ko localStorage mein save nahi karte — Firebase se data aata hai
 if(!L.g('settings'))L.s('settings',DEFS.settings);
 
 // ================================================================
@@ -1151,7 +1155,8 @@ async function fbGet(col){
   if(FBOn&&rtdb){
     const rtRes=await rtdbGet(col);
     if(rtRes&&rtRes.length){
-      L.s(col,rtRes); // cache locally
+      // Full data cache nahi karo — localStorage bhar jaati hai
+      // Sirf loadData mein lite cache hoti hai
       return rtRes;
     }
   }
@@ -1161,7 +1166,6 @@ async function fbGet(col){
       let s=await db.collection(col).orderBy('createdAt','desc').get();
       if(!s.empty){
         const res=s.docs.map(d=>({id:d.id,...d.data()}));
-        L.s(col,res); // cache locally
         return res;
       }
     }catch(e){}
@@ -1240,6 +1244,11 @@ async function getAllStudents(){
   return L.g('registeredUsers')||[];
 }
 async function loadData(){
+  // Purani badi cache clear karo
+  ['courses','notifs','toppers','materials','settings'].forEach(k=>{
+    try{localStorage.removeItem('uc_'+k);}catch(e){}
+  });
+
   // Sirf lightweight cache — sirf IDs aur names (full data nahi)
   const cachedCourses = L.g('courses_lite');
   const cachedNotifs = L.g('notifs_lite');
@@ -2253,7 +2262,7 @@ async function getCourseVideos(courseId){
       if(snap.exists()){
         const val=snap.val();
         const vids=Object.entries(val).map(([k,v])=>({id:k,...v})).sort((a,b)=>(a.order||0)-(b.order||0));
-        L.s(key,vids); return vids;
+        return vids;
       }
     }catch(e){}
   }
@@ -2261,10 +2270,10 @@ async function getCourseVideos(courseId){
   if(FBOn&&db){
     try{
       const snap = await db.collection('courseVideos').where('courseId','==',courseId).orderBy('order','asc').get();
-      if(!snap.empty){ const vids=snap.docs.map(d=>({id:d.id,...d.data()})); L.s(key,vids); return vids; }
+      if(!snap.empty){ const vids=snap.docs.map(d=>({id:d.id,...d.data()})); return vids; }
     }catch(e){}
   }
-  return L.g(key)||[];
+  return [];
 }
 
 function renderCourseDetail(course, videos){
@@ -3051,6 +3060,7 @@ async function revokeAccess(courseId){
         <option value="paid_math">🔐 Math Formulas (Paid)</option>
         <option value="paid_social">🔐 Social Science (Paid)</option>
         <option value="paid_quiz">🔐 Daily Quiz (Paid)</option>
+        <option value="paid_hindi">🔐 Hindi Notes (Paid)</option>
         <option value="paidnotes">🔐 Paid Notes (General)</option>
       </select>
       <button class="btn-cf" style="width:100%;background:#b71c1c" onclick="giveNotesAccess()">🔐 Notes Access दें</button>
