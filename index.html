@@ -126,6 +126,22 @@ button,input,select,textarea{font-family:'Poppins',sans-serif;outline:none}
 .amsg{padding:8px 10px;border-radius:var(--rd2);font-size:12px;margin-bottom:9px;display:none}
 .amsg.err{background:#fde8e8;color:var(--r);display:block}
 .amsg.ok{background:#e8f5e9;color:var(--g);display:block}
+.quiz-card{background:var(--card);border-radius:14px;padding:18px;margin-bottom:14px;box-shadow:var(--sh)}
+.quiz-q{font-size:15px;font-weight:700;color:var(--tx);margin-bottom:14px;line-height:1.5}
+.quiz-opts{display:flex;flex-direction:column;gap:8px}
+.quiz-opt{padding:12px 14px;border-radius:10px;border:2px solid var(--bd);background:var(--bg);color:var(--tx);font-size:13px;cursor:pointer;text-align:left;transition:.2s;font-weight:500;width:100%}
+.quiz-opt:hover{border-color:var(--p);background:var(--pl)}
+.quiz-opt.correct{background:#e8f5e9!important;border-color:#4caf50!important;color:#2e7d32!important;font-weight:700}
+.quiz-opt.wrong{background:#fde8e8!important;border-color:#f44336!important;color:#c62828!important}
+.quiz-opt.reveal{background:#e3f2fd!important;border-color:#2196f3!important;color:#1565c0!important}
+.quiz-result{text-align:center;padding:12px;border-radius:10px;font-weight:700;font-size:14px;margin-top:10px}
+.quiz-result.correct{background:#e8f5e9;color:#2e7d32}
+.quiz-result.wrong{background:#fde8e8;color:#c62828}
+.quiz-exp{font-size:12px;color:var(--txl);margin-top:8px;padding:8px;background:var(--bg);border-radius:8px;line-height:1.5}
+.quiz-score{background:linear-gradient(135deg,var(--p),var(--p2));color:#fff;border-radius:12px;padding:14px;text-align:center;margin-bottom:14px}
+.aq-opt-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.aq-opt-row input[type=text]{flex:1;margin-bottom:0!important}
+.aq-opt-row input[type=radio]{width:18px;flex-shrink:0;cursor:pointer}
 .adlink{text-align:center;font-size:12px;color:var(--txl);margin-top:9px}
 .adlink a{color:var(--p);font-weight:600;cursor:pointer}
 
@@ -598,6 +614,14 @@ button,input,select,textarea{font-family:'Poppins',sans-serif;outline:none}
       <div class="mg" id="matGrid"></div>
       <div style="height:16px"></div>
     </div>
+    <!-- DAILY QUIZ -->
+    <div class="screen" id="sc-quiz">
+      <div style="padding:14px 14px 4px;display:flex;align-items:center;justify-content:space-between">
+        <div><h3 style="font-size:15px;font-weight:700">🧪 Daily Quiz</h3><p style="font-size:12px;color:var(--txl);margin-top:3px">Practice aur test yourself!</p></div>
+        <div id="quizScoreBadge" style="display:none;background:var(--p);color:#fff;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700"></div>
+      </div>
+      <div style="padding:0 14px 80px" id="quizList"></div>
+    </div>
     <!-- NOTIFICATIONS -->
     <div class="screen" id="sc-notifications">
       <div style="padding:14px 14px 4px"><h3 style="font-size:15px;font-weight:700">🔔 All Notifications</h3></div>
@@ -640,6 +664,7 @@ button,input,select,textarea{font-family:'Poppins',sans-serif;outline:none}
     <button class="bn on" id="bn-home" onclick="goSc('home')"><i class="fas fa-home"></i><span>Home</span></button>
     <button class="bn" id="bn-courses" onclick="goSc('courses')"><i class="fas fa-book-open"></i><span>Courses</span></button>
     <button class="bn" id="bn-material" onclick="goSc('material')"><i class="fas fa-file-alt"></i><span>Materials</span></button>
+    <button class="bn" id="bn-quiz" onclick="goSc('quiz')"><i class="fas fa-question-circle"></i><span>Quiz</span></button>
     <button class="bn" id="bn-notifications" onclick="goSc('notifications')"><i class="fas fa-bell"></i><span>Alerts</span><div class="bdot" id="bndot"></div></button>
     <button class="bn" id="bn-profile" onclick="goSc('profile')"><i class="fas fa-user-circle"></i><span>Profile</span></button>
   </nav>
@@ -689,6 +714,7 @@ button,input,select,textarea{font-family:'Poppins',sans-serif;outline:none}
       <button class="adt on" onclick="swAdTab('courses',this)">📚 Courses</button>
       <button class="adt" onclick="swAdTab('notifs',this)">🔔 Notifs</button>
       <button class="adt" onclick="swAdTab('materials',this)">📄 Materials</button>
+      <button class="adt" onclick="swAdTab('quiz',this)">🧪 Quiz</button>
       <button class="adt" onclick="swAdTab('toppers',this)">🏆 Toppers</button>
       <button class="adt" onclick="swAdTab('students',this)">👥 Students</button>
       <button class="adt" onclick="swAdTab('settings',this)">⚙️ Settings</button>
@@ -798,6 +824,30 @@ button,input,select,textarea{font-family:'Poppins',sans-serif;outline:none}
         </div>
         <div class="ad-list-head">All Materials <span id="mListCount"></span></div>
         <div id="adMList"></div>
+      </div>
+
+      <!-- ===== QUIZ TAB ===== -->
+      <div class="ad-sec" id="adT-quiz">
+        <div class="af">
+          <div class="af-title">🧪 New Quiz Question Add करें</div>
+          <div class="aok" id="aoQ">✅ Question saved!</div>
+          <label>Question *</label>
+          <textarea id="aq_q" placeholder="Question likho..." rows="3" style="width:100%;padding:9px;border:1.5px solid var(--bd);border-radius:8px;font-size:13px;background:var(--bg);color:var(--tx);margin-bottom:10px;resize:vertical"></textarea>
+          <label>Options (sahi answer pe radio dabao) *</label>
+          <div class="aq-opt-row"><input type="radio" name="aq_correct" value="0" id="aq_r0"/><input type="text" id="aq_o0" placeholder="Option A"/></div>
+          <div class="aq-opt-row"><input type="radio" name="aq_correct" value="1" id="aq_r1"/><input type="text" id="aq_o1" placeholder="Option B"/></div>
+          <div class="aq-opt-row"><input type="radio" name="aq_correct" value="2" id="aq_r2"/><input type="text" id="aq_o2" placeholder="Option C"/></div>
+          <div class="aq-opt-row"><input type="radio" name="aq_correct" value="3" id="aq_r3"/><input type="text" id="aq_o3" placeholder="Option D"/></div>
+          <label style="margin-top:8px">Explanation (optional)</label>
+          <input type="text" id="aq_exp" placeholder="Sahi answer ki explanation..."/>
+          <div class="af-row" style="margin-top:8px">
+            <div><label>Class</label><select id="aq_cls"><option value="both">Both</option><option value="9th">9th</option><option value="10th">10th</option></select></div>
+            <div><label>Subject</label><input type="text" id="aq_sub" placeholder="Science, Math..."/></div>
+          </div>
+          <button class="btn-add" onclick="adAddQuiz()">💾 Question Save करें</button>
+        </div>
+        <div class="ad-list-head">All Questions <span id="qListCount"></span></div>
+        <div id="adQList"></div>
       </div>
 
       <!-- ===== TOPPERS TAB ===== -->
@@ -1210,6 +1260,7 @@ async function loadData(){
   [AC,AN,AT,AM] = await Promise.all([
     fbGet('courses'), fbGet('notifs'), fbGet('toppers'), fbGet('materials')
   ]);
+  AQ = await fbGet('quizQuestions') || [];
   AS = await getSettings();
 
   // Sirf lite version cache karo (thumbnails chhod do — woh bade hote hain)
@@ -1432,6 +1483,7 @@ function goSc(name){
   const bn=document.getElementById('bn-'+name);if(bn)bn.classList.add('on');
   if(name==='profile')renderProfile();
   if(name==='notifications')renderNotifsFull();
+  if(name==='quiz')renderQuizList();
 }
 function filterC(f,btn){document.querySelectorAll('#cTabs .stab').forEach(t=>t.classList.remove('on'));btn.classList.add('on');renderAllCourses(f);}
 
@@ -1628,8 +1680,11 @@ function renderProfile(){
   document.getElementById('dEnr').textContent=enrolled.length;document.getElementById('dJoin').textContent=joined;
   document.getElementById('dSub').textContent=name+' | Bihar Board';
   document.getElementById('navSub').textContent=cls?'Class '+cls+' | Bihar Board':'Bihar Board 9th & 10th';
-  const pct=Math.round((enrolled.length/Math.max(AC.length,1))*100);
-  document.getElementById('prPct').textContent=pct+'%';document.getElementById('prC').style.strokeDashoffset=164-(164*pct/100);
+  const totalCourses = AC.length || 1;
+  const enrolledCount = enrolled.length;
+  const pct = Math.min(100, Math.round((enrolledCount / totalCourses) * 100));
+  document.getElementById('prPct').textContent = enrolledCount + '/' + totalCourses;
+  document.getElementById('prC').style.strokeDashoffset = 164 - (164 * pct / 100);
   const mc=document.getElementById('myCC');const my=AC.filter(c=>enrolled.includes(c.id));
   mc.innerHTML=my.length?my.map((c,i)=>ccHTML(c,i)).join(''):'<div style="padding:0 14px;width:100%"><div class="empty"><i class="fas fa-book"></i><p>Koi course enrolled nahi. Courses se join karein!</p></div></div>';
 }
@@ -1643,6 +1698,120 @@ function applySettings(){
   if(AS.wa&&g('as_wa'))g('as_wa').value=AS.wa;
   if(AS.ticker&&g('as_tk'))g('as_tk').value=AS.ticker;
   if(AS.yt&&g('as_yt'))g('as_yt').value=AS.yt;
+}
+
+// ================================================================
+// DAILY QUIZ SYSTEM
+// ================================================================
+let AQ = []; // All Questions
+let quizAnswers = {}; // {questionId: selectedOptionIndex}
+
+async function loadQuizData(){
+  AQ = await fbGet('quizQuestions') || [];
+}
+
+function renderQuizList(){
+  const el = document.getElementById('quizList');
+  if(!AQ.length){
+    el.innerHTML = `<div class="quiz-empty"><i class="fas fa-question-circle"></i><p>Koi quiz question nahi hai abhi.<br/>Admin se add karwayein!</p></div>`;
+    return;
+  }
+  // Score badge
+  const answered = Object.keys(quizAnswers).length;
+  const correct = Object.values(quizAnswers).filter(a=>a.correct).length;
+  const scoreBadge = document.getElementById('quizScoreBadge');
+  if(answered > 0){
+    scoreBadge.style.display = 'block';
+    scoreBadge.textContent = `✅ ${correct}/${answered}`;
+  }
+  // Filter by class
+  const userCls = CUD && CUD.cls ? CUD.cls : 'both';
+  const questions = AQ.filter(q => q.cls === 'both' || q.cls === userCls || !q.cls);
+  el.innerHTML = questions.map((q,i) => {
+    const answered = quizAnswers[q.id];
+    const opts = [q.o0, q.o1, q.o2, q.o3].filter(Boolean);
+    return `<div class="quiz-card">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <span style="background:var(--p);color:#fff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">${i+1}</span>
+        ${q.subject?`<span style="background:var(--pl);color:var(--p);font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600">${q.subject}</span>`:''}
+      </div>
+      <div class="quiz-q">${q.question||q.q||''}</div>
+      <div class="quiz-opts">
+        ${opts.map((opt,oi)=>{
+          let cls = 'quiz-opt';
+          if(answered){
+            if(oi === parseInt(q.correct)) cls += ' correct';
+            else if(oi === answered.selected) cls += ' wrong';
+          }
+          return `<button class="${cls}" ${answered?'disabled':''} onclick="submitQuizAnswer('${q.id}',${oi},${q.correct},'${(q.exp||'').replace(/'/g,'&#39;')}')">
+            <span style="font-weight:700;margin-right:6px">${['A','B','C','D'][oi]}.</span>${opt}
+          </button>`;
+        }).join('')}
+      </div>
+      ${answered ? `
+        <div class="quiz-result ${answered.correct?'correct':'wrong'}">
+          ${answered.correct ? '🎉 Sahi jawab!' : '❌ Galat jawab!'}
+        </div>
+        ${q.exp ? `<div class="quiz-exp">💡 ${q.exp}</div>` : ''}
+      ` : ''}
+    </div>`;
+  }).join('');
+}
+
+function submitQuizAnswer(qid, selected, correct, exp){
+  quizAnswers[qid] = {selected, correct: selected === parseInt(correct)};
+  renderQuizList();
+}
+
+// Admin Quiz Functions
+async function adAddQuiz(){
+  const q = document.getElementById('aq_q').value.trim();
+  const o0 = document.getElementById('aq_o0').value.trim();
+  const o1 = document.getElementById('aq_o1').value.trim();
+  const o2 = document.getElementById('aq_o2').value.trim();
+  const o3 = document.getElementById('aq_o3').value.trim();
+  const correct = document.querySelector('input[name="aq_correct"]:checked')?.value;
+  if(!q||!o0||!o1){showToast('⚠️ Question aur Options A, B required!');return}
+  if(correct===undefined||correct===null){showToast('⚠️ Sahi answer select karo!');return}
+  const exp = document.getElementById('aq_exp').value.trim();
+  const cls = document.getElementById('aq_cls').value;
+  const subject = document.getElementById('aq_sub').value.trim();
+  await fbAdd('quizQuestions',{question:q,o0,o1,o2:o2||'',o3:o3||'',correct:parseInt(correct),exp,cls,subject,date:new Date().toISOString().slice(0,10)});
+  AQ = await fbGet('quizQuestions');
+  renderAdQuiz();
+  document.getElementById('aq_q').value='';
+  ['aq_o0','aq_o1','aq_o2','aq_o3','aq_exp','aq_sub'].forEach(id=>document.getElementById(id).value='');
+  document.querySelectorAll('input[name="aq_correct"]').forEach(r=>r.checked=false);
+  showAOk('aoQ');
+}
+
+function renderAdQuiz(){
+  const el = document.getElementById('adQList');
+  document.getElementById('qListCount').textContent = `(${AQ.length})`;
+  if(!AQ.length){el.innerHTML='<div class="empty"><i class="fas fa-question-circle"></i><p>No questions yet</p></div>';return}
+  el.innerHTML = AQ.map(q=>`
+    <div class="stu-row" style="flex-direction:column;align-items:flex-start;gap:6px">
+      <div style="display:flex;justify-content:space-between;width:100%;align-items:flex-start">
+        <p style="font-weight:600;font-size:13px;flex:1;margin-right:8px">${q.question||q.q||''}</p>
+        <button onclick="adDelQuiz('${q.id}')" style="background:#fde8e8;color:var(--r);border:none;padding:4px 8px;border-radius:6px;font-size:11px;cursor:pointer;flex-shrink:0">🗑️</button>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px">
+        ${[q.o0,q.o1,q.o2,q.o3].filter(Boolean).map((o,i)=>`
+          <span style="font-size:11px;padding:2px 8px;border-radius:8px;${i===parseInt(q.correct)?'background:#e8f5e9;color:#2e7d32;font-weight:700':'background:var(--bg);color:var(--txl)'}">
+            ${['A','B','C','D'][i]}: ${o}${i===parseInt(q.correct)?' ✅':''}
+          </span>`).join('')}
+      </div>
+      ${q.subject?`<span style="font-size:11px;color:var(--txl)">${q.subject} | ${q.cls||'Both'}</span>`:''}
+    </div>`).join('');
+}
+
+async function adDelQuiz(id){
+  customConfirm('🗑️ Delete Question?','Kya aap yeh question delete karna chahte hain?',async()=>{
+    await fbDel('quizQuestions',id);
+    AQ = await fbGet('quizQuestions');
+    renderAdQuiz();
+    showToast('✅ Question deleted!');
+  });
 }
 
 // ENROLL
@@ -1684,6 +1853,7 @@ function swAdTab(tab,btn){
   document.querySelectorAll('.ad-sec').forEach(s=>s.classList.remove('on'));
   document.getElementById('adT-'+tab).classList.add('on');
   if(tab==='students')loadStudentsList();
+  if(tab==='quiz'){loadQuizData().then(renderAdQuiz);}
 }
 async function loadAdminData(){
   document.getElementById('adStC').textContent=AC.length;
