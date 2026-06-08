@@ -1148,6 +1148,8 @@ async function bootApp(){
     const apBtn=document.getElementById('adminPanelBtn');
     if(apBtn)apBtn.style.display='flex';
   }
+  // FCM init - user login ke baad
+  setTimeout(()=>initFCM(), 2000);
 }
 
 // DATA
@@ -3196,43 +3198,45 @@ async function revokeAccess(courseId){
 // ================================================================
 // FIREBASE FCM PUSH NOTIFICATION SYSTEM
 // ================================================================
-const FCM_VAPID_KEY = 'BLgml-8tHKSOtDniHwqxJ278bgDYdVea2HXqm_2ISUMnSW_UyQetGZdEMxgpvoE73xX2EXFJQWmPTd4Vluexi7Y'; // Firebase Console se lena hai
+const FCM_VAPID_KEY = 'BLgml-8tHKSOtDniHwqxJ278bgDYdVea2HXqm_2ISUMnSW_UyQetGZdEMxgpvoE73xX2EXFJQWmPTd4Vluexi7Y';
 
 let fcmMessaging = null;
 let fcmToken = null;
+let fcmSWReg = null;
 
-// FCM Initialize karo
+// Step 1: Service Worker pehle register karo (login se pehle)
+async function registerFCMServiceWorker() {
+  try {
+    if (!('serviceWorker' in navigator)) return null;
+    fcmSWReg = await navigator.serviceWorker.register('/UNIVERSE-CLASSES/firebase-messaging-sw.js');
+    console.log('✅ FCM SW registered');
+    return fcmSWReg;
+  } catch(e) {
+    console.log('SW register error:', e);
+    return null;
+  }
+}
+
+// Step 2: User login ke BAAD FCM init karo
 async function initFCM() {
   try {
     if (!FBOn || !firebase.apps.length) return;
-    
-    // Check browser support
-    if (!('Notification' in window)) {
-      console.log('Browser notifications support nahi karta');
-      return;
-    }
-    if (!('serviceWorker' in navigator)) {
-      console.log('Service Worker support nahi hai');
+    if (!('Notification' in window)) return;
+    if (!CU || !CU.uid) {
+      console.log('FCM: User login nahi hai, skip');
       return;
     }
 
     fcmMessaging = firebase.messaging();
 
-    // Foreground messages handle karo (jab app khula ho)
+    // Foreground message handler
     fcmMessaging.onMessage((payload) => {
-      console.log('FCM Message received:', payload);
-      const { title, body, icon } = payload.notification || {};
-      
-      // App ke andar notification show karo
-      showToast('🔔 ' + (title || 'New Notification') + ': ' + (body || ''));
-      
-      // Notification bell dot update karo
+      const { title, body } = payload.notification || {};
+      showToast('🔔 ' + (title || 'Notification') + ': ' + (body || ''));
       const navDot = document.getElementById('navDot');
       const bndot = document.getElementById('bndot');
       if (navDot) navDot.style.display = 'block';
       if (bndot) bndot.style.display = 'block';
-      
-      // Firestore se latest notifications reload karo
       fbGet('notifs').then(notifs => {
         AN = notifs || [];
         renderHNotifs();
@@ -3241,11 +3245,7 @@ async function initFCM() {
       });
     });
 
-    // Service Worker register karo
-    const registration = await navigator.serviceWorker.register('/UNIVERSE-CLASSES/firebase-messaging-sw.js');
-    console.log('SW registered for FCM');
-
-    // Login ke baad permission maango
+    // Permission maango
     const permission = await Notification.requestPermission();
     if (permission === 'granted') {
       await getFCMToken();
@@ -3256,27 +3256,30 @@ async function initFCM() {
   }
 }
 
-// FCM Token lao aur Firestore mein save karo
+// Token lao - SW ready hone ka wait karo
 async function getFCMToken() {
   try {
-    if (!fcmMessaging) return;
-    
-    const token = await fcmMessaging.getToken({ 
+    if (!fcmMessaging || !CU || !CU.uid) return;
+
+    // SW ready hone ka wait karo
+    if (!fcmSWReg) {
+      fcmSWReg = await navigator.serviceWorker.ready;
+    }
+
+    const token = await fcmMessaging.getToken({
       vapidKey: FCM_VAPID_KEY,
-      serviceWorkerRegistration: await navigator.serviceWorker.getRegistration('/UNIVERSE-CLASSES/firebase-messaging-sw.js')
+      serviceWorkerRegistration: fcmSWReg
     });
-    
+
     if (token) {
       fcmToken = token;
-      console.log('FCM Token:', token);
-      
-      // Token ko user ke Firestore record mein save karo
-      if (CU && CU.uid && db) {
+      console.log('✅ FCM Token milا:', token.substring(0,20) + '...');
+      if (db) {
         await db.collection('users').doc(CU.uid).update({
           fcmToken: token,
           fcmTokenUpdated: new Date().toISOString()
         });
-        console.log('✅ FCM Token saved to Firestore');
+        console.log('✅ FCM Token Firestore mein save hua');
       }
     }
   } catch (e) {
@@ -3284,10 +3287,7 @@ async function getFCMToken() {
   }
 }
 
-// Admin: Notification send karo (FCM via Firestore trigger)
-// Note: Actual FCM send ke liye Firebase Cloud Function chahiye
-// Hum Firestore mein pending_notifications collection use karenge
-// aur Cloud Function wahan se sab users ko push karega
+// Admin: Notification Firestore queue mein daalo
 async function sendFCMNotification(title, body) {
   try {
     if (!db) return;
@@ -3298,17 +3298,15 @@ async function sendFCMNotification(title, body) {
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       sent: false
     });
-    console.log('✅ Notification queued for FCM delivery');
+    console.log('✅ FCM notification queued');
   } catch(e) {
     console.log('FCM send error:', e);
   }
 }
 
-// Boot hone ke baad FCM init karo (delay se)
+// SW pehle register karo page load pe
 document.addEventListener('DOMContentLoaded', () => {
-  setTimeout(() => {
-    if (FBOn) initFCM();
-  }, 3000);
+  registerFCMServiceWorker();
 });
 </script>
 
