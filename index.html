@@ -1363,12 +1363,6 @@ async function doLogin(){
   btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Login...';
   try{
     if(FBOn){
-      // Pehle check karo ki email registered hai ya nahi
-      const methods=await auth.fetchSignInMethodsForEmail(em);
-      if(!methods||methods.length===0){
-        setMsg('loginMsg','❌ Yeh Email registered nahi hai! Pehle Register karein.','err');
-        btn.disabled=false;btn.innerHTML='Login करें';return;
-      }
       const c=await auth.signInWithEmailAndPassword(em,pw);CU=c.user;await bootApp();
     } else {
       const us=L.g('registeredUsers')||[];
@@ -1663,7 +1657,7 @@ function renderMatPageWithOptions(catKey){
     } else {
       // Show items with lock — title, desc, price visible but content locked
       html+=paidItems.map(m=>`
-        <div class="pdf-row" style="align-items:flex-start;gap:10px;opacity:0.9">
+        <div class="pdf-row" style="align-items:flex-start;gap:10px;opacity:0.9;cursor:pointer" onclick="openNotesEnroll('${paidKey}')">
           ${m.thumb?`<img src="${m.thumb}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;flex-shrink:0" onerror="this.style.display='none'"/>`:`<div class="pdf-ic" style="background:#b71c1c18">🔐</div>`}
           <div style="flex:1">
             <h4>${m.title||''}</h4>
