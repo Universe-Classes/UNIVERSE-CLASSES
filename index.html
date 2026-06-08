@@ -1700,13 +1700,11 @@ function openPDF(url,title){
 function openNotesEnroll(catKey){
   const cat=MAT_CATS[catKey]||{};
   const waNo=(AS.wa||'+91 8825270186').replace(/[^0-9]/g,'');
-  const msg=encodeURIComponent('Hello! I want to buy '+cat.label+' from Universe Classes\nName: '+(CUD&&CUD.name||CU&&CU.displayName||'')+'\nClass: '+(CUD&&CUD.cls||''));
-  const waUrl='whatsapp://send?phone='+waNo+'&text='+msg;
+  const name=(CUD&&CUD.name)||(CU&&CU.displayName)||'';
+  const cls=(CUD&&CUD.cls)||'';
+  const msg=encodeURIComponent('Main Universe Classes se ''+cat.label+'' kharidna chahta/chahti hoon\nName: '+name+'\nClass: '+cls+'\nMobile: '+(CUD&&CUD.mobile||''));
   const waWebUrl='https://wa.me/'+waNo+'?text='+msg;
-  const a=document.createElement('a');
-  a.href=waUrl;a.style.display='none';
-  document.body.appendChild(a);a.click();document.body.removeChild(a);
-  setTimeout(()=>{if(document.visibilityState!=='hidden'){window.open(waWebUrl,'_blank');}},1000);
+  window.open(waWebUrl,'_blank');
 }
 function closePDF(){document.getElementById('pdfOv').classList.remove('on');document.getElementById('pdfFrame').src='';}
 function renderProfile(){
