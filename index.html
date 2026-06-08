@@ -1702,7 +1702,7 @@ function openNotesEnroll(catKey){
   const waNo=(AS.wa||'+91 8825270186').replace(/[^0-9]/g,'');
   const name=(CUD&&CUD.name)||(CU&&CU.displayName)||'';
   const cls=(CUD&&CUD.cls)||'';
-  const msg=encodeURIComponent('Main Universe Classes se ''+cat.label+'' kharidna chahta/chahti hoon\nName: '+name+'\nClass: '+cls+'\nMobile: '+(CUD&&CUD.mobile||''));
+  const msg=encodeURIComponent('Main Universe Classes se '+cat.label+' kharidna chahta/chahti hoon\nName: '+name+'\nClass: '+cls+'\nMobile: '+(CUD&&CUD.mobile||''));
   const waWebUrl='https://wa.me/'+waNo+'?text='+msg;
   window.open(waWebUrl,'_blank');
 }
