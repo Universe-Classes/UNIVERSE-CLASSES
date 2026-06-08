@@ -66,6 +66,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"></script>
 <style>
 :root{
   --p:#4f46e5;--p2:#7c3aed;--pl:#eef2ff;
@@ -108,9 +109,9 @@ button,input,select,textarea{font-family:'Poppins',sans-serif;outline:none}
 @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 
 /* AUTH - Modern Glass */
-#pgAuth{background:linear-gradient(135deg,#0f0f23,#1e1b4b,#312e81);display:flex;flex-direction:column;align-items:center;justify-content:center;overflow-y:auto}
+#pgAuth{background:linear-gradient(135deg,#0f0f23,#1e1b4b,#312e81);align-items:center;justify-content:center;overflow-y:auto;position:relative}
 #pgAuth::before{content:'';position:absolute;width:500px;height:500px;background:radial-gradient(circle,rgba(79,70,229,.35) 0%,transparent 70%);top:-150px;right:-150px;animation:orb1 8s ease-in-out infinite}
-.auth-card{background:rgba(255,255,255,.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:28px;width:calc(100% - 32px);max-width:400px;overflow:hidden;margin:auto;box-shadow:0 32px 64px rgba(0,0,0,.35),0 0 0 1px rgba(255,255,255,.2);animation:authPop .5s cubic-bezier(.34,1.56,.64,1)}
+.auth-card{background:rgba(255,255,255,.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:28px;width:calc(100% - 32px);max-width:400px;overflow:hidden;box-shadow:0 32px 64px rgba(0,0,0,.35),0 0 0 1px rgba(255,255,255,.2);animation:authPop .5s cubic-bezier(.34,1.56,.64,1)}
 @keyframes authPop{from{opacity:0;transform:scale(.9) translateY(30px)}to{opacity:1;transform:scale(1) translateY(0)}}
 .auth-head{background:linear-gradient(135deg,#0f0f23,#1e1b4b,#4f46e5);padding:24px;text-align:center;color:#fff;position:relative;overflow:hidden}
 .auth-head::before{content:'';position:absolute;inset:0;background:linear-gradient(45deg,transparent 40%,rgba(255,255,255,.05) 50%,transparent 60%);animation:headShimmer 3s infinite}
@@ -517,7 +518,7 @@ button,input,select,textarea{font-family:'Poppins',sans-serif;outline:none}
 .cd-stat .cdn{font-size:16px;font-weight:800;font-family:'Baloo 2',cursive}
 .cd-stat p{font-size:10px;opacity:.8}
 </style>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>"></head>
+</head>
 <body>
 
 <!-- SPLASH -->
@@ -1999,6 +2000,8 @@ async function adAddNotif(){
   const n=document.getElementById('an_n').value==='yes';
   const d=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
   await fbAdd('notifs',{text:t,date:d,isNew:n});
+  // FCM push notification bhi bhejo sab users ko
+  await sendFCMNotification('🔔 Universe Classes', t);
   AN=await fbGet('notifs');renderHNotifs();renderNotifsFull();renderAdNotifs();
   document.getElementById('an_t').value='';document.getElementById('adStN').textContent=AN.length;updateNotifDot();showAOk('aoN');
 }
@@ -3188,24 +3191,125 @@ async function revokeAccess(courseId){
   </div>
 </div>
 
-<!-- OneSignal Web Push -->
-<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<!-- Firebase Cloud Messaging (FCM) Push Notifications -->
 <script>
-  window.OneSignalDeferred = window.OneSignalDeferred || [];
-  OneSignalDeferred.push(async function(OneSignal) {
-    await OneSignal.init({
-      appId: "b587e66a-03fb-44c8-82ac-7e5cae4d036e",
-      notifyButton: { enable: false },
-      allowLocalhostAsSecureOrigin: true,
-    });
-    // Login ke baad notification permission maango
-    const permission = await OneSignal.Notifications.permission;
-    if(!permission){
-      setTimeout(async()=>{
-        await OneSignal.Slidedown.promptPush();
-      }, 5000);
+// ================================================================
+// FIREBASE FCM PUSH NOTIFICATION SYSTEM
+// ================================================================
+const FCM_VAPID_KEY = 'YOUR_VAPID_KEY_HERE'; // Firebase Console se lena hai
+
+let fcmMessaging = null;
+let fcmToken = null;
+
+// FCM Initialize karo
+async function initFCM() {
+  try {
+    if (!FBOn || !firebase.apps.length) return;
+    
+    // Check browser support
+    if (!('Notification' in window)) {
+      console.log('Browser notifications support nahi karta');
+      return;
     }
-  });
+    if (!('serviceWorker' in navigator)) {
+      console.log('Service Worker support nahi hai');
+      return;
+    }
+
+    fcmMessaging = firebase.messaging();
+
+    // Foreground messages handle karo (jab app khula ho)
+    fcmMessaging.onMessage((payload) => {
+      console.log('FCM Message received:', payload);
+      const { title, body, icon } = payload.notification || {};
+      
+      // App ke andar notification show karo
+      showToast('🔔 ' + (title || 'New Notification') + ': ' + (body || ''));
+      
+      // Notification bell dot update karo
+      const navDot = document.getElementById('navDot');
+      const bndot = document.getElementById('bndot');
+      if (navDot) navDot.style.display = 'block';
+      if (bndot) bndot.style.display = 'block';
+      
+      // Firestore se latest notifications reload karo
+      fbGet('notifs').then(notifs => {
+        AN = notifs || [];
+        renderHNotifs();
+        renderNotifsFull();
+        updateNotifDot();
+      });
+    });
+
+    // Service Worker register karo
+    const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+    console.log('SW registered for FCM');
+
+    // Login ke baad permission maango
+    const permission = await Notification.requestPermission();
+    if (permission === 'granted') {
+      await getFCMToken();
+    }
+
+  } catch (e) {
+    console.log('FCM init error:', e);
+  }
+}
+
+// FCM Token lao aur Firestore mein save karo
+async function getFCMToken() {
+  try {
+    if (!fcmMessaging) return;
+    
+    const token = await fcmMessaging.getToken({ 
+      vapidKey: FCM_VAPID_KEY,
+      serviceWorkerRegistration: await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js')
+    });
+    
+    if (token) {
+      fcmToken = token;
+      console.log('FCM Token:', token);
+      
+      // Token ko user ke Firestore record mein save karo
+      if (CU && CU.uid && db) {
+        await db.collection('users').doc(CU.uid).update({
+          fcmToken: token,
+          fcmTokenUpdated: new Date().toISOString()
+        });
+        console.log('✅ FCM Token saved to Firestore');
+      }
+    }
+  } catch (e) {
+    console.log('FCM Token error:', e);
+  }
+}
+
+// Admin: Notification send karo (FCM via Firestore trigger)
+// Note: Actual FCM send ke liye Firebase Cloud Function chahiye
+// Hum Firestore mein pending_notifications collection use karenge
+// aur Cloud Function wahan se sab users ko push karega
+async function sendFCMNotification(title, body) {
+  try {
+    if (!db) return;
+    await db.collection('pending_notifications').add({
+      title: title,
+      body: body,
+      topic: 'all_users',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      sent: false
+    });
+    console.log('✅ Notification queued for FCM delivery');
+  } catch(e) {
+    console.log('FCM send error:', e);
+  }
+}
+
+// Boot hone ke baad FCM init karo (delay se)
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    if (FBOn) initFCM();
+  }, 3000);
+});
 </script>
 
 </body>
