@@ -66,7 +66,6 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"></script>
 <style>
 :root{
   --p:#4f46e5;--p2:#7c3aed;--pl:#eef2ff;
@@ -109,9 +108,9 @@ button,input,select,textarea{font-family:'Poppins',sans-serif;outline:none}
 @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 
 /* AUTH - Modern Glass */
-#pgAuth{background:linear-gradient(135deg,#0f0f23,#1e1b4b,#312e81);align-items:center;justify-content:center;overflow-y:auto;position:relative}
+#pgAuth{background:linear-gradient(135deg,#0f0f23,#1e1b4b,#312e81);display:flex;flex-direction:column;align-items:center;justify-content:center;overflow-y:auto}
 #pgAuth::before{content:'';position:absolute;width:500px;height:500px;background:radial-gradient(circle,rgba(79,70,229,.35) 0%,transparent 70%);top:-150px;right:-150px;animation:orb1 8s ease-in-out infinite}
-.auth-card{background:rgba(255,255,255,.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:28px;width:calc(100% - 32px);max-width:400px;overflow:hidden;box-shadow:0 32px 64px rgba(0,0,0,.35),0 0 0 1px rgba(255,255,255,.2);animation:authPop .5s cubic-bezier(.34,1.56,.64,1)}
+.auth-card{background:rgba(255,255,255,.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:28px;width:calc(100% - 32px);max-width:400px;overflow:hidden;margin:auto;box-shadow:0 32px 64px rgba(0,0,0,.35),0 0 0 1px rgba(255,255,255,.2);animation:authPop .5s cubic-bezier(.34,1.56,.64,1)}
 @keyframes authPop{from{opacity:0;transform:scale(.9) translateY(30px)}to{opacity:1;transform:scale(1) translateY(0)}}
 .auth-head{background:linear-gradient(135deg,#0f0f23,#1e1b4b,#4f46e5);padding:24px;text-align:center;color:#fff;position:relative;overflow:hidden}
 .auth-head::before{content:'';position:absolute;inset:0;background:linear-gradient(45deg,transparent 40%,rgba(255,255,255,.05) 50%,transparent 60%);animation:headShimmer 3s infinite}
@@ -518,27 +517,7 @@ button,input,select,textarea{font-family:'Poppins',sans-serif;outline:none}
 .cd-stat .cdn{font-size:16px;font-weight:800;font-family:'Baloo 2',cursive}
 .cd-stat p{font-size:10px;opacity:.8}
 </style>
-<script>
-// YouTube postMessage errors suppress karo
-(function(){
-  var origErr = window.onerror;
-  window.onerror = function(msg, src, line, col, err){
-    if(msg && msg.toString().indexOf('postMessage') !== -1) return true;
-    if(src && src.indexOf('widgetapi') !== -1) return true;
-    if(origErr) return origErr(msg, src, line, col, err);
-    return false;
-  };
-  var origConsoleError = console.error;
-  console.error = function(){
-    var args = Array.prototype.slice.call(arguments);
-    var msg = args.join(' ');
-    if(msg.indexOf('postMessage') !== -1) return;
-    if(msg.indexOf('widgetapi') !== -1) return;
-    origConsoleError.apply(console, args);
-  };
-})();
-</script>
-</head>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>"></head>
 <body>
 
 <!-- SPLASH -->
@@ -1168,8 +1147,6 @@ async function bootApp(){
     const apBtn=document.getElementById('adminPanelBtn');
     if(apBtn)apBtn.style.display='flex';
   }
-  // FCM init - user login ke baad
-  setTimeout(()=>initFCM(), 2000);
 }
 
 // DATA
@@ -1363,6 +1340,12 @@ async function doLogin(){
   btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Login...';
   try{
     if(FBOn){
+      // Pehle check karo ki email registered hai ya nahi
+      const methods=await auth.fetchSignInMethodsForEmail(em);
+      if(!methods||methods.length===0){
+        setMsg('loginMsg','❌ Yeh Email registered nahi hai! Pehle Register karein.','err');
+        btn.disabled=false;btn.innerHTML='Login करें';return;
+      }
       const c=await auth.signInWithEmailAndPassword(em,pw);CU=c.user;await bootApp();
     } else {
       const us=L.g('registeredUsers')||[];
@@ -1657,7 +1640,7 @@ function renderMatPageWithOptions(catKey){
     } else {
       // Show items with lock — title, desc, price visible but content locked
       html+=paidItems.map(m=>`
-        <div class="pdf-row" style="align-items:flex-start;gap:10px;opacity:0.9;cursor:pointer" onclick="openNotesEnroll('${paidKey}')">
+        <div class="pdf-row" style="align-items:flex-start;gap:10px;opacity:0.9">
           ${m.thumb?`<img src="${m.thumb}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;flex-shrink:0" onerror="this.style.display='none'"/>`:`<div class="pdf-ic" style="background:#b71c1c18">🔐</div>`}
           <div style="flex:1">
             <h4>${m.title||''}</h4>
@@ -1714,11 +1697,13 @@ function openPDF(url,title){
 function openNotesEnroll(catKey){
   const cat=MAT_CATS[catKey]||{};
   const waNo=(AS.wa||'+91 8825270186').replace(/[^0-9]/g,'');
-  const name=(CUD&&CUD.name)||(CU&&CU.displayName)||'';
-  const cls=(CUD&&CUD.cls)||'';
-  const msg=encodeURIComponent('Main Universe Classes se '+cat.label+' kharidna chahta/chahti hoon\nName: '+name+'\nClass: '+cls+'\nMobile: '+(CUD&&CUD.mobile||''));
+  const msg=encodeURIComponent('Hello! I want to buy '+cat.label+' from Universe Classes\nName: '+(CUD&&CUD.name||CU&&CU.displayName||'')+'\nClass: '+(CUD&&CUD.cls||''));
+  const waUrl='whatsapp://send?phone='+waNo+'&text='+msg;
   const waWebUrl='https://wa.me/'+waNo+'?text='+msg;
-  window.open(waWebUrl,'_blank');
+  const a=document.createElement('a');
+  a.href=waUrl;a.style.display='none';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(()=>{if(document.visibilityState!=='hidden'){window.open(waWebUrl,'_blank');}},1000);
 }
 function closePDF(){document.getElementById('pdfOv').classList.remove('on');document.getElementById('pdfFrame').src='';}
 function renderProfile(){
@@ -2014,8 +1999,6 @@ async function adAddNotif(){
   const n=document.getElementById('an_n').value==='yes';
   const d=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
   await fbAdd('notifs',{text:t,date:d,isNew:n});
-  // FCM push notification bhi bhejo sab users ko
-  await sendFCMNotification('🔔 Universe Classes', t);
   AN=await fbGet('notifs');renderHNotifs();renderNotifsFull();renderAdNotifs();
   document.getElementById('an_t').value='';document.getElementById('adStN').textContent=AN.length;updateNotifDot();showAOk('aoN');
 }
@@ -2424,7 +2407,7 @@ function onYouTubeIframeAPIReady(){
       playsinline: 1,
       rel: 0,
       showinfo: 0,
-      origin: 'https://universe-classes.github.io'
+      origin: window.location.origin || 'https://localhost'
     },
     events: {
       onReady: function(e){
@@ -3205,102 +3188,24 @@ async function revokeAccess(courseId){
   </div>
 </div>
 
-<!-- Firebase Cloud Messaging (FCM) Push Notifications -->
+<!-- OneSignal Web Push -->
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script>
-// ================================================================
-// FIREBASE FCM PUSH NOTIFICATION SYSTEM
-// ================================================================
-const FCM_VAPID_KEY = 'BLgml-8tHKSOtDniHwqxJ278bgDYdVea2HXqm_2ISUMnSW_UyQetGZdEMxgpvoE73xX2EXFJQWmPTd4Vluexi7Y';
-
-let fcmMessaging = null;
-let fcmToken = null;
-let fcmSWReg = null;
-
-// Step 1: Service Worker pehle register karo (login se pehle)
-async function registerFCMServiceWorker() {
-  try {
-    if (!('serviceWorker' in navigator)) return null;
-    fcmSWReg = await navigator.serviceWorker.register('/UNIVERSE-CLASSES/firebase-messaging-sw.js');
-    console.log('✅ FCM SW registered');
-    return fcmSWReg;
-  } catch(e) {
-    console.log('SW register error:', e);
-    return null;
-  }
-}
-
-// Step 2: User login ke BAAD FCM init karo
-async function initFCM() {
-  try {
-    if (!FBOn || !firebase.apps.length) return;
-    if (!('Notification' in window)) return;
-    if (!CU || !CU.uid) {
-      console.log('FCM: User login nahi hai, skip');
-      return;
-    }
-
-    fcmMessaging = firebase.messaging();
-
-    // Foreground message handler
-    fcmMessaging.onMessage((payload) => {
-      const { title, body } = payload.notification || {};
-      showToast('🔔 ' + (title || 'Notification') + ': ' + (body || ''));
-      const navDot = document.getElementById('navDot');
-      const bndot = document.getElementById('bndot');
-      if (navDot) navDot.style.display = 'block';
-      if (bndot) bndot.style.display = 'block';
-      fbGet('notifs').then(notifs => {
-        AN = notifs || [];
-        renderHNotifs();
-        renderNotifsFull();
-        updateNotifDot();
-      });
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  OneSignalDeferred.push(async function(OneSignal) {
+    await OneSignal.init({
+      appId: "b587e66a-03fb-44c8-82ac-7e5cae4d036e",
+      notifyButton: { enable: false },
+      allowLocalhostAsSecureOrigin: true,
     });
-
-    // Permission maango
-    const permission = await Notification.requestPermission();
-    if (permission === 'granted') {
-      await getFCMToken();
+    // Login ke baad notification permission maango
+    const permission = await OneSignal.Notifications.permission;
+    if(!permission){
+      setTimeout(async()=>{
+        await OneSignal.Slidedown.promptPush();
+      }, 5000);
     }
-
-  } catch (e) {
-    console.log('FCM init error:', e);
-  }
-}
-
-// Token lao - SW ready hone ka wait karo
-async function getFCMToken() {
-  try {
-    if (!fcmMessaging || !CU || !CU.uid) return;
-    if (!fcmSWReg) fcmSWReg = await navigator.serviceWorker.ready;
-    // FCM v1 requires server-side auth - using Firestore queue instead
-    console.log('✅ FCM ready - using Firestore notification queue');
-  } catch (e) {
-    console.log('FCM Token error:', e);
-  }
-}
-
-// Admin: Notification Firestore queue mein daalo
-async function sendFCMNotification(title, body) {
-  try {
-    if (!db) return;
-    await db.collection('pending_notifications').add({
-      title: title,
-      body: body,
-      topic: 'all_users',
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      sent: false
-    });
-    console.log('✅ FCM notification queued');
-  } catch(e) {
-    console.log('FCM send error:', e);
-  }
-}
-
-// SW pehle register karo page load pe
-document.addEventListener('DOMContentLoaded', () => {
-  registerFCMServiceWorker();
-});
+  });
 </script>
 
 </body>
