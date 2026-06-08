@@ -518,6 +518,26 @@ button,input,select,textarea{font-family:'Poppins',sans-serif;outline:none}
 .cd-stat .cdn{font-size:16px;font-weight:800;font-family:'Baloo 2',cursive}
 .cd-stat p{font-size:10px;opacity:.8}
 </style>
+<script>
+// YouTube postMessage errors suppress karo
+(function(){
+  var origErr = window.onerror;
+  window.onerror = function(msg, src, line, col, err){
+    if(msg && msg.toString().indexOf('postMessage') !== -1) return true;
+    if(src && src.indexOf('widgetapi') !== -1) return true;
+    if(origErr) return origErr(msg, src, line, col, err);
+    return false;
+  };
+  var origConsoleError = console.error;
+  console.error = function(){
+    var args = Array.prototype.slice.call(arguments);
+    var msg = args.join(' ');
+    if(msg.indexOf('postMessage') !== -1) return;
+    if(msg.indexOf('widgetapi') !== -1) return;
+    origConsoleError.apply(console, args);
+  };
+})();
+</script>
 </head>
 <body>
 
@@ -2410,7 +2430,7 @@ function onYouTubeIframeAPIReady(){
       playsinline: 1,
       rel: 0,
       showinfo: 0,
-      origin: window.location.origin || 'https://localhost'
+      origin: 'https://universe-classes.github.io'
     },
     events: {
       onReady: function(e){
