@@ -3242,7 +3242,7 @@ async function initFCM() {
     });
 
     // Service Worker register karo
-    const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+    const registration = await navigator.serviceWorker.register('/UNIVERSE-CLASSES/firebase-messaging-sw.js');
     console.log('SW registered for FCM');
 
     // Login ke baad permission maango
@@ -3263,7 +3263,7 @@ async function getFCMToken() {
     
     const token = await fcmMessaging.getToken({ 
       vapidKey: FCM_VAPID_KEY,
-      serviceWorkerRegistration: await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js')
+      serviceWorkerRegistration: await navigator.serviceWorker.getRegistration('/UNIVERSE-CLASSES/firebase-messaging-sw.js')
     });
     
     if (token) {
