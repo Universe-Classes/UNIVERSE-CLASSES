@@ -3201,10 +3201,10 @@ async function revokeAccess(courseId){
       serviceWorkerParam: { scope: "/UNIVERSE-CLASSES/" },
     });
     // Login ke baad notification permission maango
-    const permission = await OneSignal.Notifications.permission;
+    const permission = OneSignal.Notifications.permission;
     if(!permission){
       setTimeout(async()=>{
-        await OneSignal.Slidedown.promptPush();
+        await OneSignal.Notifications.requestPermission();
       }, 5000);
     }
   });
