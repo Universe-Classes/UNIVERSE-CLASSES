@@ -3197,6 +3197,8 @@ async function revokeAccess(courseId){
       appId: "b587e66a-03fb-44c8-82ac-7e5cae4d036e",
       notifyButton: { enable: false },
       allowLocalhostAsSecureOrigin: true,
+      serviceWorkerPath: "OneSignalSDKWorker.js",
+      serviceWorkerParam: { scope: "/UNIVERSE-CLASSES/" },
     });
     // Login ke baad notification permission maango
     const permission = await OneSignal.Notifications.permission;
