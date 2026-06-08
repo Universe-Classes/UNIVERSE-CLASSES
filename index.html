@@ -3260,28 +3260,9 @@ async function initFCM() {
 async function getFCMToken() {
   try {
     if (!fcmMessaging || !CU || !CU.uid) return;
-
-    // SW ready hone ka wait karo
-    if (!fcmSWReg) {
-      fcmSWReg = await navigator.serviceWorker.ready;
-    }
-
-    const token = await fcmMessaging.getToken({
-      vapidKey: FCM_VAPID_KEY,
-      serviceWorkerRegistration: fcmSWReg
-    });
-
-    if (token) {
-      fcmToken = token;
-      console.log('✅ FCM Token milا:', token.substring(0,20) + '...');
-      if (db) {
-        await db.collection('users').doc(CU.uid).update({
-          fcmToken: token,
-          fcmTokenUpdated: new Date().toISOString()
-        });
-        console.log('✅ FCM Token Firestore mein save hua');
-      }
-    }
+    if (!fcmSWReg) fcmSWReg = await navigator.serviceWorker.ready;
+    // FCM v1 requires server-side auth - using Firestore queue instead
+    console.log('✅ FCM ready - using Firestore notification queue');
   } catch (e) {
     console.log('FCM Token error:', e);
   }
