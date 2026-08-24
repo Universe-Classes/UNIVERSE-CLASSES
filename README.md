@@ -1,66 +1,71 @@
-# 🌟 UNIVERSE CLASSES
+ UNIVERSE CLASSES
 
-Welcome to **Universe Classes** 👋
+Welcome to Universe Classes
 
-This is a simple education website made for student who want to learn many thing online.
-Here you can find study material, classes, videos and other learning things.
+This is a Simple Education Website Made For student Who Want to learn many thing online
+Here you can find Study material classe videos And other Learning thingss
 
-## 📚 About This Website
+ About This Website
 
 Universe Classes is a small online learning platform.
 Our main aim is to give **easy education content** for student in simple way.
 
 We try to make learning more easy and interesting for everyone.
 
-## 🚀 What You Can Find
+ What You Can Find
 
-- 📖 Study Materials
-- 🎥 Educational Videos
-- 📝 Notes and important topic
-- 🎓 Online Classes
-- 💡 Learning Resources
-- 📚 Different subject content
+-Study Materials
+ Educational Videos
+ Notes and important topic
+ Online Classes
+ Learning Resources
+Different subject content
 
-## 💻 Website
+ Website
 
-You can visit our website from here:
+You can visit our website from here
 
-**https://universe-classes.github.io/UNIVERSE-CLASSES/**
+https://universe-classes.github.io/UNIVERSE-CLASSES/
 
-## 🛠️ Made With
+  Made With
 
-This website is made using some simple web technology:
+This website is made using
 
-- HTML
-- CSS
-- JavaScript
-- GitHub Pages
+HTML
+ CSS
+JavaScript
+ GitHub Pages
 
-The website is made for learning and education purpose.
+The website is made for learning and education Purpose
 
-## ❤️ Why Universe Classes?
+ Why Universe Classess
 
 We believe education should be easy for all student.
 So we are trying to make a website where student can learn without much problem.
 
 Our website is still improving and more feature can be added in future.
 
-## 👨‍🎓 For Students
+ For Students
 
-If you are a student, you can use this website for your study and learning.
-Please check the website time to time because new content may be added.
+If you are a student You Can Use This website for Gour study And learninng
+Please check the website time to time Because New Content Will be Added
 
-## 📢 Note
+ Note
 
-This project is still under development.
-Some page or feature can be not fully ready or may change later.
+This Project Is still under development.
+Some page or feature can be not fully ready or may Change Laterr
 
-If you find any problem in website, please inform us.
+If You Rind Any problem in websit  please inform Us
+at - aryamankumar2403@gmail.com
+upport
 
-## ⭐ Support
+If You Like This Project Then You Van Give A On GitHub
 
-If you like this project then you can give a ⭐ on GitHub.
+Thank you for visiting **Universe Classes
 
-Thank you for visiting **Universe Classes** ❤️
+Keep Learning, Keep Growing! 
 
-**Keep Learning, Keep Growing! 🚀**
+The Chalanging Part of This Site Is to Aad Api Keys And Built The Login padge And Most Deficult Part Us To Aad YouTube Video Player 
+The Site is Perfectly Working 
+
+The Dedgine is soo Cool I Aaded Round glowing On Logo 
