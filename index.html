@@ -581,7 +581,7 @@ button,input,select,textarea{font-family:'Poppins',sans-serif;outline:none}
           <input type="checkbox" id="tcAgree" onchange="document.getElementById('btnSignup').disabled=!this.checked"/>
           <span>I agree to the <a onclick="openTC()">Terms &amp; Conditions</a></span>
         </div>
-        <button class="btn-p" id="btnSignup" onclick="doSignup()" disabled>Account बनाएं 🎉</button>
+        <button class="btn-p" id="btnSignup" onclick="doSignup()">Account बनाएं 🎉</button>
         <div class="adiv">— या —</div>
         <button class="btn-g" onclick="doGoogle()"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="16"/> Google से Register</button>
       </div>
@@ -1391,6 +1391,7 @@ async function doSignup(){
   if(!cl){setMsg('signupMsg','⚠️ Apni Class select karo!','err');return}
   if(!pw){setMsg('signupMsg','⚠️ Password daalo!','err');return}
   if(pw.length<6){setMsg('signupMsg','⚠️ Password kam se kam 6 characters ka hona chahiye!','err');return}
+  if(!document.getElementById('tcAgree').checked){setMsg('signupMsg','⚠️ Terms & Conditions ko agree karna zaroori hai!','err');return}
   btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Creating...';
   const prof={name:nm,email:em,mobile:mb,cls:cl,district:ds||'Bihar',enrolled:[],joinedAt:new Date().toISOString().slice(0,10)};
   try{
