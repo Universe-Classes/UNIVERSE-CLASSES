@@ -3,7 +3,7 @@
 Welcome to Universe Classes
  Important note for AAL VIewers And Student dont put wrong details in sginup padge give a vali Mobile no Valid EMAIL Valid PLACE and class if you put wrong you cant singup the easy way is use Googel login future 
  
-This is a Simple Education Website Made For student Who Want to learn many thing online
+This is a Simple Education Website Made For student Who Want to learn many subjects chaptwers  online
 
 Here you can find Study material classe videos And other Learning thingss
 
