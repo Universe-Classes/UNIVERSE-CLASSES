@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login · Lamp</title>
+  <title>Sign Up · Lamp</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
@@ -42,8 +42,6 @@
       padding: 2rem;
       gap: 2rem;
     }
-
-    /* ---------------------- Lamp side ---------------------- */
 
     .lamp-section {
       flex: 1;
@@ -87,8 +85,6 @@
       transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
     .pull-string-group:hover .string-handle { stroke: #fff; }
-
-    /* ---------------------- Form side ---------------------- */
 
     .form-section {
       flex: 1;
@@ -194,15 +190,6 @@
     }
     .form-footer a:hover { color: #fff; }
 
-    .forgot-pass {
-      display: block;
-      margin-top: 1.5rem;
-      color: #777;
-      text-align: center;
-      text-decoration: none;
-    }
-    .forgot-pass:hover { color: #fff; }
-
     @media (max-width: 768px) {
       .container { flex-direction: column; height: auto; }
       .lamp-svg { max-width: 250px; }
@@ -258,37 +245,44 @@
 
     <div class="form-section">
       <div class="form-card">
-        <h2>Welcome back</h2>
-        <p class="subtitle">Pull the string to wake the lamp up.</p>
+        <h2>Create account</h2>
+        <p class="subtitle">The lamp wakes up once you're all set.</p>
 
-        <form id="loginForm" novalidate>
+        <form id="signupForm" novalidate>
           <div class="input-group">
-            <label for="username">Username</label>
-            <input type="text" id="username" name="username" placeholder="Enter your username" required>
-            <span class="input-hint" id="usernameHint"></span>
+            <label for="fullName">Full name</label>
+            <input type="text" id="fullName" name="fullName" placeholder="Enter your full name" required>
+            <span class="input-hint" id="fullNameHint"></span>
           </div>
 
           <div class="input-group">
-            <label for="password">Password</label>
-            <input type="password" id="password" name="password" placeholder="Enter your password" required>
-            <span class="input-hint" id="passwordHint"></span>
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" placeholder="you@example.com" required>
+            <span class="input-hint" id="emailHint"></span>
           </div>
 
-          <button type="submit" class="submit-btn">Login</button>
+          <div class="input-group">
+            <label for="signupPassword">Password</label>
+            <input type="password" id="signupPassword" name="password" placeholder="Create a password" required>
+            <span class="input-hint" id="signupPasswordHint"></span>
+          </div>
+
+          <div class="input-group">
+            <label for="confirmPassword">Confirm password</label>
+            <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Re-enter your password" required>
+            <span class="input-hint" id="confirmPasswordHint"></span>
+          </div>
+
+          <button type="submit" class="submit-btn">Sign up</button>
         </form>
 
-        <a href="#" class="forgot-pass">Forgot password?</a>
-        <p class="form-footer">New here? <a href="signup.html">Create an account</a></p>
+        <p class="form-footer">Already have an account? <a href="index.html">Log in</a></p>
       </div>
     </div>
 
   </div>
 
   <script>
-    // The lamp cycles through a few "moods" — off, green (calm), off,
-    // orange (warm) — each pull of the string. Every mood is just a
-    // bundle of CSS custom properties, so toggling it means writing
-    // new values onto :root and letting the CSS transitions do the rest.
     const lampMoods = [
       { themeColor: '#2a2c30', themeGlowRgb: '42, 44, 48', shadeColor: '#2c2c2c', bulbColor: '#1a1a1a', lightOpacity: '0',    btnBg: '#2a2c30', btnText: '#888', awake: 0 },
       { themeColor: '#22c55e', themeGlowRgb: '34, 197, 94', shadeColor: '#6c8c73', bulbColor: '#e6ffe6', lightOpacity: '0.15', btnBg: '#22c55e', btnText: '#fff', awake: 1 },
@@ -322,20 +316,42 @@
       faceSleep.style.opacity = mood.awake ? 0 : 1;
     }
 
-    // Basic validation so blank fields don't just silently fail on submit.
-    document.getElementById('loginForm').addEventListener('submit', (e) => {
+    const form = document.getElementById('signupForm');
+    const fields = {
+      fullName: document.getElementById('fullName'),
+      email: document.getElementById('email'),
+      password: document.getElementById('signupPassword'),
+      confirmPassword: document.getElementById('confirmPassword'),
+    };
+    const hints = {
+      fullName: document.getElementById('fullNameHint'),
+      email: document.getElementById('emailHint'),
+      password: document.getElementById('signupPasswordHint'),
+      confirmPassword: document.getElementById('confirmPasswordHint'),
+    };
+
+    form.addEventListener('submit', (e) => {
       e.preventDefault();
-      const username = document.getElementById('username');
-      const password = document.getElementById('password');
-      const usernameHint = document.getElementById('usernameHint');
-      const passwordHint = document.getElementById('passwordHint');
+      let valid = true;
 
-      usernameHint.textContent = username.value.trim() ? '' : 'Username is required';
-      passwordHint.textContent = password.value.trim() ? '' : 'Password is required';
+      hints.fullName.textContent = fields.fullName.value.trim() ? '' : 'Please enter your name';
+      if (!fields.fullName.value.trim()) valid = false;
 
-      if (username.value.trim() && password.value.trim()) {
-        // Hook your real auth call up here.
-        console.log('Logging in as', username.value.trim());
+      const emailOk = /\S+@\S+\.\S+/.test(fields.email.value.trim());
+      hints.email.textContent = emailOk ? '' : 'Enter a valid email address';
+      if (!emailOk) valid = false;
+
+      const passwordOk = fields.password.value.length >= 6;
+      hints.password.textContent = passwordOk ? '' : 'Password must be at least 6 characters';
+      if (!passwordOk) valid = false;
+
+      const matches = fields.confirmPassword.value === fields.password.value && fields.confirmPassword.value.length > 0;
+      hints.confirmPassword.textContent = matches ? '' : 'Passwords do not match';
+      if (!matches) valid = false;
+
+      if (valid) {
+        // Hook your real signup call up here.
+        console.log('Creating account for', fields.email.value.trim());
       }
     });
   </script>
