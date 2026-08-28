@@ -4,7 +4,7 @@ Welcome to Universe Classes
  Important note for AAL VIewers And Student dont put wrong details in sginup padge give a vali Mobile no Valid EMAIL Valid PLACE and class if you put wrong you cant singup the easy way is use Googel login future 
  
 This is a Simple Education Website Made For student Who Want to learn many subjects chaptwers  online
-
+i added alampt that works guys you clcik on he lamp the lamp glow ups thats cool and most intrwesting part of my projetcs
 Here you can find Study material classe videos And other Learning thingss
 
  About This Website
