@@ -8,7 +8,7 @@ i added alampt that works guys you clcik on he lamp the lamp glow ups thats cool
 Here you can find Study material classe videos And other Learning thingss
 
  About This Website
- 
+ 3 colours on my lamp guys Tap ON LAMP PLUG AND LAMP BURNS UP
 Universe Classes is a small online learning platform For class 10 and 9th students of Bihar bord
 
 Our main aim is to give  education content for student in Simpel and local lnguanage 
